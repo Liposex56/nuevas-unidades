@@ -1,0 +1,102 @@
+P0: Actividad unidad 4 y 5
+P1: MATRIZ DE VALORACIÓN DEL CAPITAL PERSONAL
+P2: Fundamentación Teórica
+P3: Según Karl Sveiby (1997), las organizaciones generan valor a través de activos intangibles que incluyen el conocimiento de las personas, sus relaciones y la capacidad para crear nuevo conocimiento.
+P4: Nonaka y Takeuchi (1995) afirman que las personas constituyen la principal fuente de creación del conocimiento organizacional, razón por la cual es fundamental reconocer y valorar el conocimiento acumulado a lo largo de la vida.
+P5: Muchas veces las personas subestiman sus conocimientos, experiencias y relaciones. Esta actividad busca que el estudiante tome conciencia del valor real de su capital personal y profesional.
+P6: PROPÓSITO
+P7: Reconocer, valorar y reflexionar sobre el capital humano, intelectual y relacional construido a lo largo de la vida.
+P8: ACTIVIDAD
+P9: Mi Capital Personal: Lo que realmente valgo
+P10: Complete la siguiente matriz asignando una valoración de 1 a 5.
+P11: Escala
+P12: MATRIZ DE VALORACIÓN DEL CAPITAL HUMANO: El capital humano corresponde a los conocimientos, habilidades, talentos, competencias y valores personales.
+P13: Puntaje Capital Humano
+P14: Total: ______ / 50
+P15: MATRIZ DE VALORACIÓN DEL CAPITAL INTELECTUAL
+P16: El capital intelectual corresponde al conocimiento adquirido mediante formación académica y experiencia.
+P17: Puntaje Capital Intelectual
+P18: Total: ______ / 50
+P20: MATRIZ DE VALORACIÓN DEL CAPITAL RELACIONAL
+P21: El capital relacional corresponde a las relaciones y redes construidas a lo largo de la vida.
+P22: Puntaje Capital Relacional
+P23: Total: ______ / 50
+P25: CÁLCULO DEL CAPITAL PERSONAL TOTAL
+P26: TOTAL GENERAL
+P27: Puntaje obtenido: ______ /150
+P28: INTERPRETACIÓN DE RESULTADOS
+P29: REFLEXIÓN CRÍTICA
+P30: Después de completar la matriz responda:
+P31: 1.¿Qué descubrí sobre mi capital personal que antes no valoraba?
+P32: 2.¿Cuál de los tres capitales considero más fortalecido?
+P33: 3.¿Cuál necesita mayor desarrollo y por qué?
+P34: 4.¿Qué acciones concretas puedo realizar durante los próximos dos años para fortalecer mi capital intelectual?
+P35: 5.¿Cómo contribuyen mis relaciones personales y profesionales a mi felicidad y bienestar?
+P36: 6.¿Por qué las organizaciones deben valorar a las personas más allá de los recursos económicos?
+P37: 7.Desde los aportes de Nonaka y Takeuchi, ¿por qué el conocimiento de las personas es considerado el activo más importante de una organización?
+P39: PRODUCTO ADICIONAL
+P40: Mi Balance de Capital Personal
+P41: El estudiante elaborará una conclusión de una página titulada:
+P42: "El valor de lo que sé, lo que soy y las personas que me acompañan"
+P43: En ella deberá reflexionar sobre cómo su capital humano, intelectual y relacional se ha construido a lo largo de su vida y cómo puede seguir fortaleciéndolo para alcanzar bienestar, felicidad y desarrollo profesional. (agrega tu fotografía. )
+P44: Esta actividad suele generar reflexiones muy profundas porque ayuda a los estudiantes a comprender que su mayor riqueza no está en lo que poseen materialmente, sino en los conocimientos que han construido, las personas con quienes se relacionan y las capacidades que han desarrollado a lo largo de su vida.
+
+TABLE 0:
+Valor | Significado
+1 | Muy bajo
+2 | Bajo
+3 | Medio
+4 | Alto
+5 | Muy alto
+
+TABLE 1:
+Aspecto | Valoración
+Liderazgo | 1 2 3 4 5
+Comunicación | 1 2 3 4 5
+Trabajo en equipo | 1 2 3 4 5
+Creatividad | 1 2 3 4 5
+Resolución de problemas | 1 2 3 4 5
+Empatía | 1 2 3 4 5
+Adaptabilidad al cambio | 1 2 3 4 5
+Inteligencia emocional | 1 2 3 4 5
+Capacidad de aprendizaje | 1 2 3 4 5
+Ética profesional | 1 2 3 4 5
+
+TABLE 2:
+Aspecto | Valoración
+Estudios realizados | 1 2 3 4 5
+Cursos y diplomados | 1 2 3 4 5
+Certificaciones | 1 2 3 4 5
+Experiencia laboral | 1 2 3 4 5
+Experiencia investigativa | 1 2 3 4 5
+Producción académica | 1 2 3 4 5
+Manejo tecnológico | 1 2 3 4 5
+Conocimiento disciplinar | 1 2 3 4 5
+Formación continua | 1 2 3 4 5
+Capacidad para enseñar | 1 2 3 4 5
+
+TABLE 3:
+Aspecto | Valoración
+Relaciones familiares | 1 2 3 4 5
+Amistades significativas | 1 2 3 4 5
+Relaciones laborales | 1 2 3 4 5
+Relaciones académicas | 1 2 3 4 5
+Participación en comunidades | 1 2 3 4 5
+Redes profesionales | 1 2 3 4 5
+Trabajo colaborativo | 1 2 3 4 5
+Capacidad para generar confianza | 1 2 3 4 5
+Capacidad para ayudar a otros | 1 2 3 4 5
+Reconocimiento social | 1 2 3 4 5
+
+TABLE 4:
+Capital | Puntaje
+Capital Humano | _____ /50
+Capital Intelectual | _____ /50
+Capital Relacional | _____ /50
+
+TABLE 5:
+Puntaje | Nivel
+120 – 150 | Capital Personal Muy Alto
+90 – 119 | Capital Personal Alto
+60 – 89 | Capital Personal Medio
+30 – 59 | Capital Personal Bajo

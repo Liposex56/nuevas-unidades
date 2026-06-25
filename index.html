@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión del Conocimiento: Caso Interactivo</title>
+  <link rel="icon" type="image/webp" href="Recursos/nuevo/companero-kubo.webp" />
+  <link rel="stylesheet" href="src/styles.css?v=1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#loginView">Saltar al contenido principal</a>
+  <div class="ambient-canvas" aria-hidden="true"></div>
+  <button
+    type="button"
+    id="btnAccessibilityGuide"
+    class="accessibility-guide-button"
+    aria-label="Escuchar guia accesible de esta pantalla"
+  >
+    <span class="audio-button-icon" aria-hidden="true">&#9654;</span>
+    <span id="accessibilityGuideLabel">Escuchar guia de esta pantalla</span>
+  </button>
+  <audio id="accessibilityGuideAudio" preload="none"></audio>
+
+  <!-- VISTA 1: PANTALLA DE LOGUEO -->
+  <div id="loginView" class="view is-active">
+    <div class="login-shell">
+      <section class="login-story" aria-labelledby="loginBrandTitle">
+        <a class="login-brand" href="#" aria-label="Gestión del Conocimiento: Caso Interactivo">
+          <span class="login-brand-mark">
+            <img src="Recursos/nuevo/companero-kubo.webp" alt="">
+          </span>
+          <span>Laboratorio universitario interactivo</span>
+        </a>
+        <div class="login-story-copy">
+          <p class="eyebrow">Conocimiento que circula y transforma</p>
+          <h1 id="loginBrandTitle">Gestión del Conocimiento: Caso Interactivo</h1>
+          <p>Comprende cómo una organización aprende, protege su experiencia y toma decisiones mediante tecnología, simulación y realidad aumentada.</p>
+        </div>
+        <div class="login-topic-row" aria-label="Temas del recorrido">
+          <span>Modelo SECI</span>
+          <span>Capitales organizacionales</span>
+          <span>Transformación digital</span>
+        </div>
+        <div class="login-companion-scene" aria-hidden="true">
+          <img src="Recursos/nuevo/companero-nexo.webp" alt="">
+          <img src="Recursos/nuevo/companera-vera.webp" alt="">
+          <img src="Recursos/nuevo/companero-prisma.webp" alt="">
+          <img src="Recursos/nuevo/companero-kubo.webp" alt="">
+        </div>
+      </section>
+
+      <section class="login-box" aria-labelledby="loginTitle">
+        <div class="login-box-intro">
+        <div class="login-logo">
+          <svg viewBox="0 0 32 32" role="img" width="30" height="30" fill="#fff" aria-hidden="true"><path d="M16 3 3 10l13 7 13-7-13-7Z" /><path d="M8 14v6c0 3 4 6 8 6s8-3 8-6v-6" /></svg>
+        </div>
+        <h2 class="login-title" id="loginTitle">Iniciar sesión</h2>
+        <p class="login-subtitle" id="loginSubtitle">Ingresa tus credenciales para continuar</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="form-group" id="nameGroup" style="display: none;">
+            <label class="field-label" for="nameInput">Nombre completo</label>
+            <input type="text" id="nameInput" placeholder="Ej. Juan Pérez" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="field-label" for="emailInput">Correo institucional</label>
+            <input type="email" id="emailInput" placeholder="estudiante@uptc.edu.co" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <label class="field-label" for="passwordInput">Contraseña</label>
+            <input type="password" id="passwordInput" placeholder="********" autocomplete="current-password" required>
+          </div>
+          <button type="submit" id="submitBtn" class="start-button login-submit">Ingresar</button>
+        </form>
+        <div class="login-switch">
+          <button type="button" id="toggleAuthBtn" class="ghost-button-text">¿No tienes cuenta? Regístrate aquí</button>
+        </div>
+        <p class="login-access-note">Tu avance se guarda de forma individual en tu cuenta.</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- ENCABEZADO GLOBAL (Visible solo al entrar) -->
+  <header class="site-header" id="appHeader" hidden>
+    <div class="header-container">
+      <div class="brand-cluster">
+        <a class="brand" href="#" id="brandHomeLink">
+          <span class="brand-mark"><img src="Recursos/nuevo/companero-kubo.webp" alt=""></span>
+          <span class="brand-copy"><strong>Gestión del Conocimiento</strong><small>Caso universitario interactivo</small></span>
+        </a>
+        <img class="header-ave-seal" src="Recursos/grupo-ave-sencillo.jpeg" alt="Grupo AVE" title="Grupo de Investigación Ambientes Virtuales Educativos">
+      </div>
+      <div class="header-actions">
+        <span class="student-chip" id="headerStudentName">Estudiante</span>
+        <button class="ghost-button" id="btnGoTeam"><span class="team-button-full">Equipo de desarrollo</span><span class="team-button-short">Equipo</span></button>
+        <button class="ghost-button" id="btnGoProfile">Mi Perfil</button>
+        <button class="ghost-button" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- VISTA 2: MAPA PRINCIPAL Y SELECCIÓN DE PERSONAJE -->
+  <main id="homeView" class="view app-content" tabindex="-1">
+    <section class="welcome-layout">
+      <div class="welcome-panel">
+        <p class="eyebrow">Laboratorio de conocimiento organizacional</p>
+        <h1 id="homeGreeting">Una estrategia se construye aprendiendo</h1>
+        <p class="welcome-text">Elige un acompañante y recorre dos estaciones: primero dominarás la Gestión del Conocimiento y luego resolverás un caso universitario con capitales organizacionales, TIC y realidad aumentada.</p>
+        <div class="home-progress" aria-label="Progreso general del curso">
+          <div class="progress-copy">
+            <span>Progreso del recorrido</span>
+            <strong id="homeProgressValue">0%</strong>
+          </div>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="homeProgressTrack">
+            <span id="homeProgressBar"></span>
+          </div>
+          <p id="homeProgressText">Selecciona tu acompañante para iniciar.</p>
+        </div>
+      </div>
+      <aside class="companion-preview">
+        <span class="space-kicker" style="color:#aeb9d3;">Acompañante elegido</span>
+        <div class="preview-avatar" id="selectedPreview"><span>?</span></div>
+        <p id="selectedName" style="color:#34f5e1; font-weight:bold;">Selecciona una opción</p>
+      </aside>
+    </section>
+
+    <section class="selection-section" style="margin-top:20px;">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">Paso 1</p>
+          <h2>Elige quién te acompaña</h2>
+        </div>
+        <span class="selection-hint">Puedes cambiarlo cuando quieras</span>
+      </div>
+      <div class="companion-grid" id="companionGrid"></div>
+    </section>
+
+    <section class="route-section" style="margin-top:40px;">
+      <div class="section-title-row route-heading">
+        <div>
+          <p class="eyebrow">Paso 2: Ruta académica</p>
+          <h2>Mapa de unidades</h2>
+        </div>
+        <button type="button" class="start-button journey-cta" id="btnContinueJourney" disabled>Elige un acompañante</button>
+      </div>
+      <div class="unit-track course-route-map" id="unitTrack"></div>
+    </section>
+
+  </main>
+
+  <!-- VISTA 3: EQUIPO DE DESARROLLO -->
+  <main id="teamView" class="view app-content team-page" tabindex="-1">
+    <button class="space-back-button" id="btnBackFromTeam">← Volver al mapa</button>
+    <section class="team-showcase">
+      <header class="team-page-heading">
+        <div>
+          <p class="eyebrow">Créditos académicos</p>
+          <h1>Equipo de desarrollo</h1>
+          <p>Investigación, pedagogía y tecnología al servicio del bienestar y la gestión del conocimiento.</p>
+        </div>
+        <img src="Recursos/grupo-ave-completo.jpeg" alt="Grupo de Investigación AVE, Ambientes Virtuales Educativos">
+      </header>
+
+      <section class="team-profile-grid" aria-label="Integrantes del equipo de desarrollo">
+      <article class="team-profile-card">
+        <button type="button" class="team-profile-photo team-photo-olga" onclick="openTeamPhoto('Recursos/equipo-olga.jpeg', 'PhD. Olga Najar Sanchez')" aria-label="Ampliar fotografía de PhD. Olga Najar Sanchez">
+          <img src="Recursos/equipo-olga.jpeg" alt="PhD. Olga Najar Sanchez">
+        </button>
+        <div class="team-profile-copy">
+          <span class="team-order">01</span>
+          <h2>PhD. Olga Najar Sanchez</h2>
+          <strong class="team-role">Sociedad del Conocimiento</strong>
+          <p class="team-credential">Doctorado en Formación en Sociedad del Conocimiento.</p>
+          <p class="team-institution">Universidad Pedagógica y Tecnológica de Colombia</p>
+        </div>
+      </article>
+
+      <article class="team-profile-card is-featured">
+        <button type="button" class="team-profile-photo team-photo-yenny" onclick="openTeamPhoto('Recursos/equipo-yenny.jpg', 'Dr. Yenny Carolina Riaño Castellanos')" aria-label="Ampliar fotografía de Dr. Yenny Carolina Riaño Castellanos">
+          <img src="Recursos/equipo-yenny.jpg" alt="Dr. Yenny Carolina Riaño Castellanos">
+        </button>
+        <div class="team-profile-copy">
+          <span class="team-order">02</span>
+          <h2>Dr. Yenny Carolina Riaño Castellanos</h2>
+          <strong class="team-role">Directora del proyecto</strong>
+          <p class="team-credential">Doctoranda en Ciencias de la Educación, con énfasis en investigación, evaluación y formulación de proyectos educativos.</p>
+          <p class="team-institution">Universidad Pedagógica y Tecnológica de Colombia</p>
+        </div>
+      </article>
+
+      <article class="team-profile-card">
+        <button type="button" class="team-profile-photo team-photo-milena" onclick="openTeamPhoto('Recursos/equipo-milena.jpeg', 'Dr. Milena Rocío Castillo Garcia')" aria-label="Ampliar fotografía de Dr. Milena Rocío Castillo Garcia">
+          <img src="Recursos/equipo-milena.jpeg" alt="Dr. Milena Rocío Castillo Garcia">
+        </button>
+        <div class="team-profile-copy">
+          <span class="team-order">03</span>
+          <h2>Dr. Milena Rocío Castillo Garcia</h2>
+          <strong class="team-role">Pedagogía y Didáctica</strong>
+          <p class="team-credential">Doctoranda en Pedagogía y Didáctica de la UPTC.</p>
+          <p class="team-institution">Universidad Pedagógica y Tecnológica de Colombia</p>
+        </div>
+      </article>
+      </section>
+    </section>
+  </main>
+
+  <!-- VISTA 4: PERFIL DEL USUARIO -->
+  <main id="profileView" class="view app-content">
+    <div class="profile-layout">
+      <aside class="profile-sidebar">
+        <div class="profile-avatar-large" id="profileAvatarDisplay">IA</div>
+        <label class="ghost-button" style="text-align:center; cursor:pointer;">
+          Cambiar Foto
+          <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+        </label>
+        <h2 id="profileNameDisplay" style="margin-top:20px; color:#fff;">Usuario</h2>
+        <p id="profileEmailDisplay" style="color:#34f5e1;">correo@uptc.edu.co</p>
+        <p style="color:#aeb9d3; margin-top:10px;">Licenciatura en Informática<br>UPTC</p>
+        <button class="start-button" id="btnBackFromProfile" style="margin-top:20px; width:100%;">Volver al Mapa</button>
+      </aside>
+      <section class="profile-content">
+        <div class="profile-content-heading">
+          <div>
+            <span class="eyebrow">Progreso académico</span>
+            <h2>Mis Certificados</h2>
+          </div>
+          <aside class="cloud-sync-panel" id="cloudSyncPanel" data-state="local" aria-labelledby="cloudSyncTitle">
+            <span class="cloud-sync-indicator" aria-hidden="true"></span>
+            <div>
+              <strong id="cloudSyncTitle">Sincronización de la cuenta</strong>
+              <p id="cloudSyncStatus" role="status">Comprobando el progreso guardado...</p>
+            </div>
+            <button type="button" class="ghost-button cloud-sync-button" id="btnSyncProgress">Sincronizar ahora</button>
+          </aside>
+        </div>
+        <div class="cert-card" id="profileCertCard">
+          <h3 style="color:#34f5e1;">Aún no tienes certificados</h3>
+          <p style="color:#aeb9d3;">Completa las evaluaciones con 80% para obtener tus certificados.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- VISTA 4: MÓDULO INTERACTIVO -->
+  <main id="moduleView" class="view app-content space-mode">
+    <div class="space-dashboard">
+      <button class="space-back-button" id="btnBackToMap">← Volver al mapa galáctico</button>
+      <article class="mission-status">
+        <div>
+          <span class="space-kicker" id="modKicker">Módulo X</span>
+          <h1 id="modTitle">Título del Módulo</h1>
+          <p id="modDesc">Descripción.</p>
+          <div class="module-progress" aria-label="Progreso de la unidad">
+            <div class="module-progress-head">
+              <span>Progreso de la unidad</span>
+              <strong id="moduleProgressValue">0%</strong>
+            </div>
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="moduleProgressTrack">
+              <span id="moduleProgressBar"></span>
+            </div>
+            <div class="stage-track" id="moduleStageTrack"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="module-side-companion" id="moduleSideCompanion">
+      <div class="side-companion-art" id="moduleCompanionArt"></div>
+      <p class="companion-speech" id="companionSpeech"></p>
+    </aside>
+    
+    <div class="module-section-intro">
+      <span class="space-kicker">Etapa 1</span>
+      <h2>Explora la teoría</h2>
+      <p>Abre cada tema para construir la base conceptual de esta unidad.</p>
+    </div>
+    
+    <div class="mindmap-container" id="mindmapContainer"></div>
+
+    <section class="station-card wide-card module-media-panel" id="moduleResourcesSection">
+      <div class="section-heading">
+        <span class="space-kicker">Recursos del m&oacute;dulo</span>
+        <h2>Infografías y apoyos interactivos</h2>
+        <p>Abre cada recurso dentro de esta misma pantalla para estudiar sin salir del software.</p>
+      </div>
+      <div class="media-grid" id="mediaContainer"></div>
+    </section>
+
+    <section class="station-card wide-card reinforcement-panel" id="reinforcementSection">
+      <div class="section-heading">
+        <span class="space-kicker">Actividad de refuerzo</span>
+        <h2>Practica antes del desafío</h2>
+        <p>Actividades interactivas para aplicar los conceptos antes de resolver la evaluación o el caso integrador.</p>
+      </div>
+      <div id="reinforcementContainer"></div>
+      <div id="reviewActivitiesContainer"></div>
+    </section>
+
+    <article class="station-card wide-card quiz-panel" id="quizSection" style="margin-top:40px; border-color:#f59e0b;">
+      <h2 id="moduleChallengeTitle" style="color:#f59e0b;">Evaluación de la unidad</h2>
+      <p id="moduleChallengeDescription" style="color:#c8d4ef;">Demuestra lo aprendido. Necesitas mínimo 80% de aciertos para aprobar y avanzar.</p>
+      <div id="quizContainer" style="margin-top:20px;"></div>
+    </article>
+  </main>
+
+  <!-- VISTA PÚBLICA DE REALIDAD AUMENTADA -->
+  <main id="arView" class="view ar-experience-view" tabindex="-1">
+    <header class="ar-topbar">
+      <button type="button" class="space-back-button" id="btnBackFromAR">← Volver</button>
+      <div>
+        <span class="space-kicker">Laboratorio móvil</span>
+        <h1>Capitales organizacionales en realidad aumentada</h1>
+      </div>
+      <span class="ar-live-badge"><i></i> Experiencia activa</span>
+    </header>
+
+    <section class="ar-lab-layout">
+      <div class="ar-camera-stage">
+        <video id="arCamera" autoplay muted playsinline></video>
+        <div class="ar-camera-fallback" id="arCameraFallback">
+          <img src="Recursos/nuevo/ar-ecosistema-digital.webp" alt="">
+          <p>Activa la cámara para superponer las capas de conocimiento sobre tu entorno.</p>
+        </div>
+        <div class="ar-reticle" aria-hidden="true"><span></span></div>
+        <article class="ar-floating-card" id="arFloatingCard">
+          <img id="arFloatingImage" src="Recursos/nuevo/ar-capital-humano.webp" alt="">
+          <div>
+            <span id="arFloatingLabel">Capital humano</span>
+            <p id="arFloatingDescription">Experiencia, habilidades, motivación y creatividad.</p>
+          </div>
+        </article>
+        <div class="ar-camera-actions">
+          <button type="button" class="start-button" id="btnStartARCamera">Activar cámara</button>
+          <button type="button" class="ghost-button" id="btnStopARCamera" hidden>Detener cámara</button>
+        </div>
+      </div>
+
+      <aside class="ar-control-panel">
+        <div>
+          <span class="space-kicker">Explora cuatro capas</span>
+          <h2>Selecciona un capital</h2>
+          <p>Cada capa plantea una pregunta para diagnosticar la organización del caso.</p>
+        </div>
+        <div class="ar-target-list" id="arTargetList"></div>
+        <div class="ar-question-panel">
+          <strong>Pregunta de observación</strong>
+          <p id="arChallengeText"></p>
+        </div>
+        <div class="ar-qr-panel" id="arQrPanel">
+          <div id="arQrCode" aria-label="Código QR para abrir esta experiencia en un celular"></div>
+          <div>
+            <strong>Continúa en tu celular</strong>
+            <p>Escanea el código y abre la cámara desde el navegador móvil.</p>
+            <button type="button" class="ghost-button" id="btnCopyARLink">Copiar enlace</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- MODAL DE TEORÍA -->
+  <div id="theoryModal" class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="theoryTitle">
+    <div class="activity-modal-overlay" id="theoryOverlay"></div>
+    <div class="activity-modal-content">
+      <div class="activity-modal-header">
+        <h2 id="theoryTitle">Título</h2>
+        <button class="close-modal-btn" id="closeTheoryBtn" aria-label="Cerrar teoría">&times;</button>
+      </div>
+      <div class="activity-modal-body" id="theoryBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VIDEO / RECURSOS -->
+  <div id="videoModal" class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="videoTitle">
+    <div class="activity-modal-overlay" id="videoOverlay"></div>
+    <div class="activity-modal-content video-modal-content">
+      <div class="activity-modal-header">
+        <div>
+          <span class="space-kicker">Recurso multimedia</span>
+          <h2 id="videoTitle">Video</h2>
+        </div>
+        <button class="close-modal-btn" id="closeVideoBtn" aria-label="Cerrar video">&times;</button>
+      </div>
+      <div class="activity-modal-body">
+        <div class="video-frame-shell">
+          <iframe
+            id="videoFrame"
+            title="Video del m&oacute;dulo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <p id="videoDescription" class="video-description"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE AMPLIACIÓN VISUAL DE LA TEORÍA -->
+  <div id="learningModal" class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="learningTitle">
+    <div class="activity-modal-overlay" id="learningOverlay"></div>
+    <div class="activity-modal-content learning-modal-content">
+      <div class="activity-modal-header">
+        <div>
+          <span class="space-kicker">Aprende más</span>
+          <h2 id="learningTitle">Ampliación visual</h2>
+        </div>
+        <button class="close-modal-btn" id="closeLearningBtn" aria-label="Cerrar ampliación visual">&times;</button>
+      </div>
+      <div class="activity-modal-body" id="learningBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE EVALUACIÓN -->
+  <div id="quizModal" class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="quizModalTitle">
+    <div class="activity-modal-overlay" id="quizOverlay"></div>
+    <div class="activity-modal-content quiz-modal-content">
+      <div class="activity-modal-header">
+        <div>
+          <span class="space-kicker" id="quizModalKicker">Evaluación</span>
+          <h2 id="quizModalTitle">Evaluación</h2>
+        </div>
+        <button class="close-modal-btn" id="closeQuizBtn" aria-label="Cerrar evaluación">&times;</button>
+      </div>
+      <div class="activity-modal-body" id="quizModalBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DEL CERTIFICADO -->
+  <div id="certificateModal" class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="certificateTitle">
+    <div class="activity-modal-overlay" id="certOverlay"></div>
+    <div class="activity-modal-content" style="max-width: 900px;">
+      <div class="activity-modal-header">
+        <h2 id="certificateTitle" style="color: #34f5e1;">¡Felicidades! Has aprobado</h2>
+        <button class="close-modal-btn" id="closeCertBtn" aria-label="Cerrar certificado">&times;</button>
+      </div>
+      <div class="activity-modal-body" style="text-align: center;">
+        <p style="margin-bottom: 15px; color:#fff;">Aquí tienes tu certificado oficial.</p>
+        <iframe id="certPreviewFrame" style="width: 100%; height: 450px; border: 1px solid rgba(52, 245, 225, 0.3); border-radius: 8px; background: #fff;"></iframe>
+        <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+          <button id="downloadCertBtn" class="start-button">Descargar PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="certificateCanvas" width="1200" height="850" style="display:none;"></canvas>
+  <div class="toast" id="toast"></div>
+  <div class="sr-only" id="liveRegion" aria-live="polite"></div>
+
+  <script src="src/new-course-data.js?v=1"></script>
+  <script src="src/main.js?v=1"></script>
+</body>
+</html>
