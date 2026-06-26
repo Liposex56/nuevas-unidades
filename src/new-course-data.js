@@ -127,7 +127,7 @@ window.KNOWLEDGE_COURSE_DATA = {
   2: {
     title: "Caso Integrador: Universidad Horizonte",
     desc: "Diagnostica sus capitales organizacionales y diseña una estrategia tecnológica para proteger y movilizar el conocimiento.",
-    completionMode: "case",
+    completionMode: "matrix",
     theoryNodes: [
       {
         id: "2.1",
@@ -173,14 +173,6 @@ window.KNOWLEDGE_COURSE_DATA = {
         imageUrl: "Recursos/nuevo/ar-ecosistema-digital.webp"
       },
       {
-        id: "capital-personal-matrix",
-        type: "actividad",
-        activityKind: "capitalMatrix",
-        title: "Matriz de valoración del capital personal",
-        description: "Valora tus capitales humano, intelectual y relacional; interpreta tus resultados y construye un balance personal.",
-        imageUrl: "Recursos/nuevo/matriz-capital-personal.webp"
-      },
-      {
         type: "infografia",
         title: "Objetivo visual: capital humano",
         description: "Examina capacidades, experiencia, motivación y aprendizaje.",
@@ -211,6 +203,50 @@ window.KNOWLEDGE_COURSE_DATA = {
     ]
   }
 };
+
+window.KNOWLEDGE_CAPITAL_MATRIX_ACTIVITY = {
+  id: "capital-personal-matrix-final",
+  type: "evaluacion",
+  activityKind: "capitalMatrix",
+  title: "Evaluación final: Matriz de valoración del capital personal",
+  description: "Valora tus capitales humano, intelectual y relacional; interpreta el resultado, responde la reflexión crítica y construye tu balance personal como cierre del caso.",
+  imageUrl: "Recursos/nuevo/matriz-capital-personal.webp"
+};
+
+window.KNOWLEDGE_BADGES = [
+  {
+    id: "unidad-1-seci",
+    modId: 1,
+    icon: "SECI",
+    name: "Arquitecto SECI",
+    description: "Domina la creación y transferencia del conocimiento organizacional.",
+    condition: "Aprobar la evaluación de la Unidad 1 con mínimo 80%."
+  },
+  {
+    id: "reto-clasificacion",
+    activity: "memory",
+    icon: "MAP",
+    name: "Analista de Evidencias",
+    description: "Clasifica situaciones complejas según su capital o proceso de conocimiento.",
+    condition: "Completar la misión de clasificación de una unidad."
+  },
+  {
+    id: "laboratorio-ar",
+    activity: "ar",
+    icon: "AR",
+    name: "Explorador Aumentado",
+    description: "Activa una capa de realidad aumentada y relaciona el marcador con el caso.",
+    condition: "Escanear al menos una capa del laboratorio AR."
+  },
+  {
+    id: "matriz-capital",
+    modId: 2,
+    icon: "150",
+    name: "Capital Personal Estratégico",
+    description: "Completa la matriz, interpreta tus capitales y presenta tu balance final.",
+    condition: "Finalizar la evaluación de Matriz de Capital Personal."
+  }
+];
 
 window.KNOWLEDGE_COMPANIONS = [
   {
@@ -246,61 +282,105 @@ window.KNOWLEDGE_MODULE_MESSAGES = {
 
 window.KNOWLEDGE_REINFORCEMENT_DATA = {
   1: {
-    title: "Conecta procesos de conocimiento",
-    sprite: "Recursos/nuevo/ar-capital-intelectual.webp",
-    pairs: [
-      { concept: "Conocimiento tácito", answer: "Una coordinadora resuelve conflictos gracias a criterios construidos durante años, aunque nunca los ha documentado." },
-      { concept: "Conocimiento explícito", answer: "Un repositorio contiene protocolos, manuales, investigaciones y formatos validados para toda la institución." },
-      { concept: "Socialización", answer: "Una persona nueva acompaña a una experta, observa su práctica y aprende mediante interacción directa." },
-      { concept: "Exteriorización", answer: "Un equipo entrevista a especialistas y convierte sus experiencias en una guía con ejemplos y decisiones clave." },
-      { concept: "Combinación", answer: "Se integran bases de datos, artículos y reportes para construir un nuevo tablero de conocimiento." },
-      { concept: "Interiorización", answer: "Después de estudiar un protocolo, el equipo lo aplica repetidamente hasta incorporarlo a su manera de trabajar." }
+    mode: "sorter",
+    title: "Arquitectura SECI en acción",
+    instruction: "Arrastra cada evidencia al proceso que mejor explica cómo circula el conocimiento. Hay casos parecidos: analiza el verbo central antes de decidir.",
+    categories: [
+      { id: "tacito", label: "Conocimiento tácito", hint: "Saber práctico, experiencia o intuición que aún no está documentada." },
+      { id: "explicito", label: "Conocimiento explícito", hint: "Información organizada en guías, protocolos, bases de datos o documentos." },
+      { id: "socializacion", label: "Socialización", hint: "Aprender observando, conversando o practicando con otra persona." },
+      { id: "exteriorizacion", label: "Exteriorización", hint: "Convertir experiencia en conceptos, guías, modelos o registros." },
+      { id: "combinacion", label: "Combinación", hint: "Integrar documentos, datos o fuentes explícitas para crear una nueva síntesis." },
+      { id: "interiorizacion", label: "Interiorización", hint: "Aplicar documentos o modelos hasta incorporarlos como práctica personal." }
+    ],
+    cards: [
+      { id: "u1-a", text: "Una profesora anticipa cuándo un grupo perderá motivación y cambia la dinámica sin consultar ningún manual.", answer: "tacito" },
+      { id: "u1-b", text: "El comité publica un protocolo validado para acompañar proyectos híbridos y lo guarda con metadatos.", answer: "explicito" },
+      { id: "u1-c", text: "Docentes jóvenes observan clases de una experta y luego conversan sobre sus decisiones pedagógicas.", answer: "socializacion" },
+      { id: "u1-d", text: "Un equipo entrevista a investigadores senior y transforma sus criterios en una guía de buenas prácticas.", answer: "exteriorizacion" },
+      { id: "u1-e", text: "La facultad cruza reportes, artículos y datos de uso para diseñar un nuevo tablero institucional.", answer: "combinacion" },
+      { id: "u1-f", text: "Después de estudiar una guía, un equipo la aplica varias semanas hasta que la incorpora a su forma de trabajo.", answer: "interiorizacion" }
     ]
   },
   2: {
+    mode: "sorter",
     title: "Diagnóstico de capitales",
-    sprite: "Recursos/nuevo/ar-capital-relacional.webp",
-    pairs: [
-      { concept: "Capital humano", answer: "La experiencia de docentes, habilidades digitales, liderazgo y disposición para aprender." },
-      { concept: "Capital intelectual", answer: "Metodologías, investigaciones, bases de datos, protocolos y memoria institucional reutilizable." },
-      { concept: "Capital relacional", answer: "Confianza y colaboración con estudiantes, egresados, comunidades, proveedores y aliados." },
-      { concept: "Ecosistema digital", answer: "Plataformas, repositorios, analítica, IA y canales que conectan el conocimiento con las personas." },
-      { concept: "Gobernanza del conocimiento", answer: "Reglas, responsables y criterios para asegurar calidad, acceso, seguridad y actualización." },
-      { concept: "Comunidad de práctica", answer: "Grupo que aprende de problemas comunes, comparte experiencias y desarrolla soluciones colectivas." }
+    instruction: "Clasifica los hallazgos del caso Universidad Horizonte. El reto es diferenciar capitales, tecnología y gobierno del conocimiento.",
+    categories: [
+      { id: "humano", label: "Capital humano", hint: "Capacidades, experiencia, liderazgo y motivación de las personas." },
+      { id: "intelectual", label: "Capital intelectual", hint: "Memoria institucional, procesos, investigaciones y activos intangibles." },
+      { id: "relacional", label: "Capital relacional", hint: "Confianza, redes y alianzas que generan intercambio de valor." },
+      { id: "digital", label: "Ecosistema digital", hint: "Herramientas, plataformas, datos e IA articuladas a un propósito." },
+      { id: "gobernanza", label: "Gobernanza", hint: "Reglas, responsables, criterios de calidad, seguridad y actualización." },
+      { id: "comunidad", label: "Comunidad de práctica", hint: "Personas que aprenden de problemas comunes y comparten soluciones." }
+    ],
+    cards: [
+      { id: "u2-a", text: "Tres docentes poseen metodologías valiosas, pero nadie más sabe aplicarlas.", answer: "humano" },
+      { id: "u2-b", text: "Las investigaciones existen, aunque están dispersas y sin criterios para encontrarlas.", answer: "intelectual" },
+      { id: "u2-c", text: "Los aliados externos entregan aportes, pero no reciben retorno ni seguimiento.", answer: "relacional" },
+      { id: "u2-d", text: "La institución compró plataformas, pero no las integró con procesos académicos.", answer: "digital" },
+      { id: "u2-e", text: "No hay responsables claros para validar, actualizar y proteger los recursos.", answer: "gobernanza" },
+      { id: "u2-f", text: "Docentes de varias áreas quieren reunirse periódicamente para resolver problemas similares.", answer: "comunidad" }
     ]
   }
 };
 
 window.KNOWLEDGE_REVIEW_DATA = {
   1: {
-    trueFalse: [
-      { text: "El conocimiento tácito puede depender de experiencia e intuición.", answer: true },
-      { text: "La transformación digital consiste únicamente en comprar software.", answer: false },
-      { text: "El aprendizaje organizacional conecta conocimiento con mejora colectiva.", answer: true },
-      { text: "En el modelo SECI, exteriorizar significa convertir documentos en experiencia personal.", answer: false }
-    ],
-    fill: [
-      { text: "El paso de conocimiento tácito a explícito se denomina ______.", answer: "exteriorización" },
-      { text: "La integración de distintas fuentes explícitas corresponde a la ______.", answer: "combinación" },
-      { text: "Peter Senge propone las organizaciones ______.", answer: "inteligentes" },
-      { text: "La innovación produce mejoras y genera ______.", answer: "valor" }
-    ],
-    distractors: ["archivo", "aislamiento", "rutina"]
+    mode: "decisionLab",
+    title: "Comité de transferencia del conocimiento",
+    instruction: "Resuelve decisiones situadas. Puedes pedir una pista, pero la respuesta final debe ser tu análisis.",
+    decisions: [
+      {
+        prompt: "Un experto se jubila en dos meses y sus criterios solo aparecen cuando acompaña proyectos reales. ¿Qué acción priorizas?",
+        options: ["Comprar licencias nuevas", "Mentorías observadas, entrevistas y documentación de casos", "Esperar a que entregue sus archivos personales", "Reducir la oferta de proyectos"],
+        correct: 1,
+        hint: "Piensa en socialización y exteriorización: primero observar, luego documentar.",
+        feedback: "La mentoría captura conocimiento tácito y la documentación lo vuelve reutilizable."
+      },
+      {
+        prompt: "La universidad tiene documentos, pero cada área usa nombres distintos y nadie encuentra lo necesario. ¿Qué mejora tiene mayor impacto?",
+        options: ["Duplicar carpetas", "Crear metadatos, responsables y una taxonomía común", "Eliminar todo lo antiguo", "Usar solo mensajes de chat"],
+        correct: 1,
+        hint: "El problema no es cantidad de información, sino recuperación y calidad.",
+        feedback: "La taxonomía y los metadatos convierten archivos en capital intelectual accesible."
+      },
+      {
+        prompt: "Un equipo aplica una guía durante el semestre y al final ya resuelve casos sin volver a leerla. ¿Qué proceso SECI ocurrió?",
+        options: ["Combinación", "Interiorización", "Socialización", "Exteriorización"],
+        correct: 1,
+        hint: "El documento explícito se volvió habilidad práctica.",
+        feedback: "La interiorización ocurre cuando lo explícito se incorpora a la práctica."
+      }
+    ]
   },
   2: {
-    trueFalse: [
-      { text: "El capital relacional se limita a una base de datos de contactos.", answer: false },
-      { text: "El capital intelectual incluye procesos y memoria institucional.", answer: true },
-      { text: "Una herramienta tecnológica genera valor aunque nadie sepa usarla.", answer: false },
-      { text: "Las comunidades de práctica facilitan transferencia de conocimiento.", answer: true }
-    ],
-    fill: [
-      { text: "Las habilidades y experiencias de las personas forman el capital ______.", answer: "humano" },
-      { text: "Los vínculos de confianza forman el capital ______.", answer: "relacional" },
-      { text: "Los repositorios fortalecen la memoria ______.", answer: "institucional" },
-      { text: "Las TIC deben responder a una estrategia de ______ del conocimiento.", answer: "gestión" }
-    ],
-    distractors: ["financiero", "aislamiento", "improvisación"]
+    mode: "decisionLab",
+    title: "Mesa de transformación de Universidad Horizonte",
+    instruction: "Toma decisiones de diagnóstico. Las pistas orientan el razonamiento sin revelar la opción correcta.",
+    decisions: [
+      {
+        prompt: "Los aliados sienten que sus aportes desaparecen cuando termina cada proyecto. ¿Qué decisión fortalece mejor el capital relacional?",
+        options: ["Cambiar de aliados cada semestre", "Crear mesas de conocimiento y devolución de resultados", "Guardar los aportes solo para uso interno", "Enviar boletines promocionales"],
+        correct: 1,
+        hint: "El capital relacional depende de confianza, retorno y aprendizaje mutuo.",
+        feedback: "Las mesas y la devolución visible transforman relaciones en conocimiento compartido."
+      },
+      {
+        prompt: "La institución tiene plataformas, pero nadie sabe quién valida contenidos ni qué se puede publicar. ¿Qué falta?",
+        options: ["Más equipos físicos", "Gobernanza del conocimiento", "Eliminar repositorios", "Menos comunicación entre áreas"],
+        correct: 1,
+        hint: "Piensa en reglas, responsables, permisos, calidad y seguridad.",
+        feedback: "La gobernanza permite que la tecnología sea confiable y sostenible."
+      },
+      {
+        prompt: "Un grupo docente quiere reunirse cada quince días para resolver problemas de enseñanza híbrida y compartir recursos. ¿Qué figura conviene crear?",
+        options: ["Comunidad de práctica", "Archivo cerrado", "Comité financiero", "Encuesta aislada"],
+        correct: 0,
+        hint: "No es solo reunión administrativa: es aprendizaje entre pares.",
+        feedback: "Una comunidad de práctica convierte problemas comunes en soluciones colectivas."
+      }
+    ]
   }
 };
 
@@ -379,6 +459,18 @@ window.KNOWLEDGE_AR_TARGETS = [
     image: "Recursos/nuevo/ar-capital-humano.webp",
     color: "#ff8c69",
     description: "Experiencia, habilidades, motivación, creatividad y capacidad de aprender.",
+    detail: "En Universidad Horizonte, el capital humano está en la experiencia docente, la capacidad de diseñar clases híbridas, el liderazgo académico y la disposición para compartir saberes antes de que se pierdan.",
+    facts: [
+      "El conocimiento tácito vive en las personas y suele perderse si no se transfiere.",
+      "La mentoría convierte experiencia individual en aprendizaje colectivo.",
+      "La motivación y la confianza son condiciones para compartir conocimiento."
+    ],
+    actions: [
+      "Identifica expertos próximos a jubilarse.",
+      "Diseña entrevistas, mentorías y comunidades de práctica.",
+      "Registra buenas prácticas con ejemplos reales."
+    ],
+    resources: ["Modelo SECI", "Aprendizaje organizacional", "Comunidades de práctica"],
     challenge: "¿Qué saber depende hoy de una persona y podría perderse?"
   },
   {
@@ -387,6 +479,18 @@ window.KNOWLEDGE_AR_TARGETS = [
     image: "Recursos/nuevo/ar-capital-intelectual.webp",
     color: "#8f8cff",
     description: "Procesos, investigaciones, datos, propiedad intelectual y memoria reutilizable.",
+    detail: "El capital intelectual convierte la experiencia en memoria institucional: protocolos, guías, investigaciones, repositorios, bases de datos, rutas de formación y criterios de calidad.",
+    facts: [
+      "No todo archivo es conocimiento: debe ser claro, recuperable y aplicable.",
+      "Los metadatos ayudan a encontrar y reutilizar recursos.",
+      "La combinación SECI integra documentos para producir nuevo conocimiento."
+    ],
+    actions: [
+      "Crea un repositorio con responsables y criterios de actualización.",
+      "Clasifica recursos por programa, tema, autor y uso pedagógico.",
+      "Relaciona documentos con problemas reales de la institución."
+    ],
+    resources: ["Repositorios institucionales", "Gestión documental", "Analítica de uso"],
     challenge: "¿Qué conocimiento debería quedar documentado y ser fácil de encontrar?"
   },
   {
@@ -395,6 +499,18 @@ window.KNOWLEDGE_AR_TARGETS = [
     image: "Recursos/nuevo/ar-capital-relacional.webp",
     color: "#48d6aa",
     description: "Confianza, redes y aprendizaje con estudiantes, aliados y comunidades.",
+    detail: "El capital relacional aparece cuando estudiantes, egresados, aliados, comunidades y docentes producen confianza, retroalimentación y proyectos que generan valor para todos.",
+    facts: [
+      "Una red sin confianza no moviliza conocimiento.",
+      "Los aliados aportan experiencia externa y validan necesidades reales.",
+      "La transferencia de conocimiento requiere diálogo, seguimiento y retorno."
+    ],
+    actions: [
+      "Crea mesas de conocimiento con aliados estratégicos.",
+      "Devuelve resultados a las comunidades participantes.",
+      "Convierte experiencias externas en casos de aprendizaje."
+    ],
+    resources: ["Alianzas académicas", "Transferencia social", "Proyectos colaborativos"],
     challenge: "¿Qué relación estratégica puede producir conocimiento compartido?"
   },
   {
@@ -403,6 +519,18 @@ window.KNOWLEDGE_AR_TARGETS = [
     image: "Recursos/nuevo/ar-ecosistema-digital.webp",
     color: "#56b8ff",
     description: "Plataformas, IA, analítica, simulación y colaboración conectadas con un propósito.",
+    detail: "El ecosistema digital integra LMS, repositorios, asistentes de IA, analítica, simuladores y recursos inmersivos para que el conocimiento sea accesible, seguro y útil.",
+    facts: [
+      "Comprar tecnología no transforma la cultura por sí sola.",
+      "La analítica ayuda a saber qué recursos se consultan y reutilizan.",
+      "La accesibilidad permite que más estudiantes participen en igualdad de condiciones."
+    ],
+    actions: [
+      "Define una arquitectura con responsables, permisos y objetivos.",
+      "Integra herramientas con procesos formativos y de investigación.",
+      "Evalúa uso, impacto y calidad de los recursos digitales."
+    ],
+    resources: ["LMS", "Repositorios", "IA educativa", "Realidad aumentada"],
     challenge: "¿Qué herramienta facilita acceso y aplicación, no solo almacenamiento?"
   }
 ];

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión del Conocimiento: Caso Interactivo</title>
   <link rel="icon" type="image/webp" href="Recursos/nuevo/companero-kubo.webp" />
-  <link rel="stylesheet" href="src/styles.css?v=1" />
+  <link rel="stylesheet" href="src/styles.css?v=2" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -225,7 +225,7 @@
         <div class="profile-content-heading">
           <div>
             <span class="eyebrow">Progreso académico</span>
-            <h2>Mis Certificados</h2>
+            <h2>Mis Insignias</h2>
           </div>
           <aside class="cloud-sync-panel" id="cloudSyncPanel" data-state="local" aria-labelledby="cloudSyncTitle">
             <span class="cloud-sync-indicator" aria-hidden="true"></span>
@@ -237,8 +237,8 @@
           </aside>
         </div>
         <div class="cert-card" id="profileCertCard">
-          <h3 style="color:#34f5e1;">Aún no tienes certificados</h3>
-          <p style="color:#aeb9d3;">Completa las evaluaciones con 80% para obtener tus certificados.</p>
+          <h3 style="color:#34f5e1;">Aún no tienes insignias</h3>
+          <p style="color:#aeb9d3;">Completa actividades, retos y evaluaciones para desbloquearlas.</p>
         </div>
       </section>
     </div>
@@ -270,6 +270,19 @@
     <aside class="module-side-companion" id="moduleSideCompanion">
       <div class="side-companion-art" id="moduleCompanionArt"></div>
       <p class="companion-speech" id="companionSpeech"></p>
+      <div class="assistant-panel" aria-label="Asistente interactivo de ayuda">
+        <div class="assistant-quick-actions">
+          <button type="button" onclick="askCompanionAssistant('hint')">Pista</button>
+          <button type="button" onclick="askCompanionAssistant('explain')">Explícame</button>
+          <button type="button" onclick="askCompanionAssistant('example')">Ejemplo</button>
+          <button type="button" onclick="askCompanionAssistant('review')">Revisa</button>
+        </div>
+        <form id="assistantForm" class="assistant-form">
+          <label class="sr-only" for="assistantQuestion">Pregunta al acompañante</label>
+          <input id="assistantQuestion" type="text" placeholder="Pregunta algo..." autocomplete="off">
+          <button type="submit" aria-label="Enviar pregunta">Enviar</button>
+        </form>
+      </div>
     </aside>
     
     <div class="module-section-intro">
@@ -325,7 +338,12 @@
           <p>Activa la cámara para superponer las capas de conocimiento sobre tu entorno.</p>
         </div>
         <div class="ar-reticle" aria-hidden="true"><span></span></div>
-        <article class="ar-floating-card" id="arFloatingCard">
+        <div class="ar-scan-instructions" id="arScanInstructions">
+          <span class="space-kicker">Escaneo pendiente</span>
+          <strong>Apunta la cámara a un marcador QR de capital</strong>
+          <p>La información aparecerá sobre la cámara únicamente cuando se detecte una capa.</p>
+        </div>
+        <article class="ar-floating-card" id="arFloatingCard" hidden>
           <img id="arFloatingImage" src="Recursos/nuevo/ar-capital-humano.webp" alt="">
           <div>
             <span id="arFloatingLabel">Capital humano</span>
@@ -334,20 +352,38 @@
         </article>
         <div class="ar-camera-actions">
           <button type="button" class="start-button" id="btnStartARCamera">Activar cámara</button>
+          <button type="button" class="ghost-button" id="btnSimulateARScan">Escanear marcador seleccionado</button>
           <button type="button" class="ghost-button" id="btnStopARCamera" hidden>Detener cámara</button>
         </div>
       </div>
 
       <aside class="ar-control-panel">
         <div>
-          <span class="space-kicker">Explora cuatro capas</span>
-          <h2>Selecciona un capital</h2>
-          <p>Cada capa plantea una pregunta para diagnosticar la organización del caso.</p>
+          <span class="space-kicker">Marcadores de escaneo</span>
+          <h2>Escanea una capa</h2>
+          <p>Usa la cámara del celular para leer un marcador. Si tu navegador no reconoce QR desde video, utiliza el botón de escaneo guiado.</p>
         </div>
         <div class="ar-target-list" id="arTargetList"></div>
-        <div class="ar-question-panel">
+        <div class="ar-question-panel" id="arQuestionPanel" hidden>
           <strong>Pregunta de observación</strong>
           <p id="arChallengeText"></p>
+        </div>
+        <div class="ar-insight-panel" id="arInsightPanel" hidden>
+          <span class="space-kicker">Capa detectada</span>
+          <h3 id="arInsightTitle">Capital humano</h3>
+          <p id="arInsightDetail"></p>
+          <div class="ar-insight-columns">
+            <div>
+              <strong>Datos importantes</strong>
+              <ul id="arInsightFacts"></ul>
+            </div>
+            <div>
+              <strong>Acciones sugeridas</strong>
+              <ul id="arInsightActions"></ul>
+            </div>
+          </div>
+          <div class="ar-related-resources" id="arRelatedResources"></div>
+          <button type="button" class="start-button" id="btnARContinueActivity">Continuar con la actividad</button>
         </div>
         <div class="ar-qr-panel" id="arQrPanel">
           <div id="arQrCode" aria-label="Código QR para abrir esta experiencia en un celular"></div>
@@ -450,7 +486,7 @@
   <div class="toast" id="toast"></div>
   <div class="sr-only" id="liveRegion" aria-live="polite"></div>
 
-  <script src="src/new-course-data.js?v=1"></script>
-  <script src="src/main.js?v=1"></script>
+  <script src="src/new-course-data.js?v=2"></script>
+  <script src="src/main.js?v=2"></script>
 </body>
 </html>

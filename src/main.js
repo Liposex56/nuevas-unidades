@@ -512,6 +512,8 @@ const reviewActivitiesData = window.KNOWLEDGE_REVIEW_DATA;
 const caseScenario = window.KNOWLEDGE_CASE_SCENARIO;
 const arTargets = window.KNOWLEDGE_AR_TARGETS;
 const capitalMatrixData = window.CAPITAL_MATRIX_DATA;
+const capitalMatrixActivity = window.KNOWLEDGE_CAPITAL_MATRIX_ACTIVITY;
+const badgeDefinitions = window.KNOWLEDGE_BADGES || [];
 
 // ==========================================
 // 2. ESTADO Y SUPABASE
@@ -547,13 +549,22 @@ let flippedReinforcementCards = [];
 let matchedReinforcementPairs = 0;
 let reinforcementAttempts = 0;
 let reinforcementStreak = 0;
+let activeSorterActivity = null;
+let sorterAssignments = {};
+let selectedSorterCardId = null;
 let selectedFillWord = null;
+let decisionReviewAnswers = [];
 let activeTheoryResources = [];
 let currentCaseStep = 0;
 let currentCaseAnswers = [];
 let arCameraStream = null;
 let arReturnView = "homeView";
 let selectedARTargetId = "humano";
+let detectedARTargetId = null;
+let arActiveModuleId = null;
+let arActiveMediaIndex = null;
+let arScanTimer = null;
+let arBarcodeDetector = null;
 let capitalMatrixDraftTimer = null;
 const modalFocusStack = [];
 
@@ -774,7 +785,8 @@ function mergeQuizResults(localResults, cloudResults) {
 function mergeCertificates(localCertificates, cloudCertificates) {
   const merged = new Map();
   [...cloudCertificates, ...localCertificates].forEach(certificate => {
-    if (certificate && certificate.modId) merged.set(String(certificate.modId), certificate);
+    const key = certificate?.achievementId || certificate?.badgeId || certificate?.modId;
+    if (certificate && key) merged.set(String(key), certificate);
   });
   return [...merged.values()];
 }
@@ -931,6 +943,42 @@ function getCompanionMessage(moduleId) {
   return `Hola ${getStudentName()}, ${message}`;
 }
 
+function getAssistantResponse(mode, question = "") {
+  const moduleTitle = courseData[currentModuleId]?.title || "esta unidad";
+  const lowerQuestion = question.toLowerCase();
+  const isMatrix = lowerQuestion.includes("matriz") || lowerQuestion.includes("capital personal") || lowerQuestion.includes("balance");
+  const isAR = lowerQuestion.includes("realidad") || lowerQuestion.includes("aumentada") || lowerQuestion.includes("qr");
+  const isSECI = lowerQuestion.includes("seci") || lowerQuestion.includes("tácito") || lowerQuestion.includes("explícito");
+
+  if (mode === "hint") {
+    return currentModuleId === 1
+      ? "Pista: identifica primero si el saber vive en la experiencia de una persona o si ya está documentado. Luego piensa qué paso SECI lo está moviendo."
+      : "Pista: en el caso, separa personas, documentos, relaciones, tecnología y reglas. Si mezclas esos planos, la decisión se vuelve débil.";
+  }
+  if (mode === "explain") {
+    return currentModuleId === 1
+      ? "Dicho de otra manera: gestionar conocimiento es evitar que la experiencia quede aislada. La organización aprende cuando observa, documenta, combina y aplica lo aprendido."
+      : "En Universidad Horizonte no basta con comprar plataformas. La solución debe conectar capital humano, intelectual y relacional mediante una estrategia digital con gobernanza.";
+  }
+  if (mode === "example") {
+    return currentModuleId === 1
+      ? "Ejemplo parecido: si una docente explica su método en una guía, hay exteriorización; si otro equipo usa esa guía hasta dominarla, hay interiorización."
+      : "Ejemplo parecido: si un aliado externo comparte datos y la universidad los convierte en casos de clase con retroalimentación, se fortalece capital relacional e intelectual.";
+  }
+  if (mode === "review") {
+    return "Revisión guiada: antes de responder, subraya el problema central, decide qué concepto lo explica y descarta opciones que solo cambian herramientas sin cambiar aprendizaje.";
+  }
+  if (isMatrix) return "Para la matriz, no busques una respuesta perfecta: valora honestamente, interpreta tu capital más fuerte y argumenta acciones concretas en el balance final.";
+  if (isAR) return "En realidad aumentada, primero abre la cámara, selecciona o escanea un marcador y observa la capa detectada. La pregunta de observación te ayuda a conectar la imagen con el caso.";
+  if (isSECI) return "Recuerda SECI así: socializar es compartir experiencia; exteriorizar es escribirla; combinar es integrar documentos; interiorizar es practicar hasta convertirlo en habilidad.";
+  return `Buena pregunta sobre ${moduleTitle}. Intenta relacionarla con una evidencia concreta del caso: qué persona, documento, relación, tecnología o regla está afectada.`;
+}
+
+window.askCompanionAssistant = function(mode) {
+  const speech = document.getElementById("companionSpeech");
+  if (speech) speech.textContent = getAssistantResponse(mode);
+}
+
 function getViewedTheorySet(moduleId) {
   return new Set(viewedTheoryByModule[moduleId] || []);
 }
@@ -1059,7 +1107,7 @@ function renderHomeProgress() {
     text.textContent = !selectedCompanion
       ? "Selecciona tu acompañante para iniciar el recorrido."
       : completedUnits === MAX_MODULES
-        ? "Has completado la evaluación y resuelto el caso integrador."
+        ? "Has completado las dos unidades, la matriz final y tus insignias principales."
         : `${completedUnits} de ${MAX_MODULES} unidades aprobadas. Tu siguiente destino es la Unidad ${highestUnlocked}.`;
   }
   if (continueButton) {
@@ -1113,8 +1161,8 @@ function renderSelectedCompanion() {
 function getMapGuideMessage() {
   if (!selectedCompanion) return "";
   if (highestUnlocked === 1) return "Comienza por la Unidad 1: distingue conocimiento tácito y explícito, domina el modelo SECI y conecta aprendizaje con innovación.";
-  if (quizResultsByModule[2]?.passed) return "Caso resuelto. Puedes volver a revisar tus decisiones, los capitales y la experiencia aumentada.";
-  return "La Unidad 2 ya está abierta. Diagnostica Universidad Horizonte y construye una estrategia viable.";
+  if (quizResultsByModule[2]?.passed) return "Evaluación final completada. Puedes revisar tu matriz, tus insignias y el laboratorio aumentado.";
+  return "La Unidad 2 ya está abierta. Diagnostica Universidad Horizonte, usa los marcadores AR y construye tu matriz final.";
 }
 
 function renderMap() {
@@ -1241,10 +1289,10 @@ function renderQuizLaunch() {
   const moduleData = courseData[currentModuleId];
   const challengeTitle = document.getElementById("moduleChallengeTitle");
   const challengeDescription = document.getElementById("moduleChallengeDescription");
-  if (moduleData?.completionMode === "case") {
-    if (challengeTitle) challengeTitle.textContent = "Caso integrador: toma de decisiones";
-    if (challengeDescription) challengeDescription.textContent = "Aplica los conceptos para resolver la situación de Universidad Horizonte. Esta actividad reemplaza una segunda evaluación.";
-    renderCaseLaunch();
+  if (moduleData?.completionMode === "matrix") {
+    if (challengeTitle) challengeTitle.textContent = "Evaluación final: Matriz de capital personal";
+    if (challengeDescription) challengeDescription.textContent = "Cierra la Unidad 2 valorando tus capitales, interpretando resultados y construyendo un balance argumentado.";
+    renderCapitalMatrixLaunch();
     return;
   }
   if (challengeTitle) challengeTitle.textContent = "Evaluación ICFES de la Unidad 1";
@@ -1270,6 +1318,52 @@ function renderQuizLaunch() {
   document.getElementById("quizContainer").innerHTML = unlocked
     ? `<button type="button" class="start-button evaluation-launch" onclick="startModuleEvaluation()">Evaluación Unidad ${currentModuleId}</button>`
     : `<div class="locked-message">Para desbloquear: teoría ${theory.viewed}/${theory.total}, recursos ${resources.viewed}/${resources.total}, actividades ${activitiesDone ? 'listas' : 'pendientes'}.</div>`;
+}
+
+function renderCapitalMatrixLaunch() {
+  const unlocked = hasUnlockedEvaluation(currentModuleId);
+  const theory = getTheoryProgress(currentModuleId);
+  const resources = getResourceProgress(currentModuleId);
+  const activitiesDone = hasCompletedReviewActivities(currentModuleId);
+  const result = quizResultsByModule[currentModuleId];
+  const matrixProgress = activityProgressByModule[currentModuleId]?.capitalMatrix;
+  const container = document.getElementById("quizContainer");
+  if (!container) return;
+
+  if (!unlocked) {
+    container.innerHTML = `<div class="locked-message">Para abrir la evaluación final: teoría ${theory.viewed}/${theory.total}, recursos ${resources.viewed}/${resources.total}, actividades ${activitiesDone ? 'listas' : 'pendientes'}.</div>`;
+    return;
+  }
+
+  if (result?.passed && result.type === "capitalMatrix") {
+    container.innerHTML = `
+      <div class="evaluation-summary is-perfect">
+        <strong>Insignia desbloqueada: Capital Personal Estratégico</strong>
+        <span>Resultado guardado: ${matrixProgress?.total || result.rawScore || 0}/150 · ${matrixProgress?.level || result.level || "Matriz completada"}.</span>
+        <div class="summary-actions">
+          <button type="button" class="ghost-button" onclick="openFinalCapitalMatrix()">Revisar evaluación final</button>
+          <button type="button" class="start-button" onclick="downloadCapitalMatrixBalance(${currentModuleId})">Descargar balance PDF</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="case-launch-card final-matrix-launch">
+      <span class="space-kicker">Cierre evaluativo</span>
+      <h3>${capitalMatrixActivity.title}</h3>
+      <p>${capitalMatrixActivity.description}</p>
+      <div class="case-launch-meta">
+        <span><b>30</b> aspectos valorados</span>
+        <span><b>7</b> preguntas críticas</span>
+        <span><b>1</b> balance final</span>
+      </div>
+      <button type="button" class="start-button" onclick="openFinalCapitalMatrix()">Iniciar evaluación final</button>
+    </div>`;
+}
+
+window.openFinalCapitalMatrix = function() {
+  openCapitalMatrix(currentModuleId, null, capitalMatrixActivity);
 }
 
 function renderCaseLaunch() {
@@ -1545,27 +1639,94 @@ function getPublicARLink() {
   return url.toString();
 }
 
+function getARTargetLink(targetId) {
+  const url = new URL(getPublicARLink());
+  url.searchParams.set("target", targetId);
+  return url.toString();
+}
+
+function renderInlineQr(host, link, size = 62) {
+  if (!host) return;
+  host.innerHTML = "";
+  if (window.QRCode) {
+    new window.QRCode(host, {
+      text: link,
+      width: size,
+      height: size,
+      colorDark: "#07110f",
+      colorLight: "#ffffff",
+      correctLevel: window.QRCode.CorrectLevel.H
+    });
+  } else {
+    host.textContent = "QR";
+  }
+}
+
 function renderARTargets() {
   const targetList = document.getElementById("arTargetList");
   if (!targetList) return;
   targetList.innerHTML = arTargets.map(target => `
     <button type="button" class="ar-target-button ${target.id === selectedARTargetId ? "is-selected" : ""}" onclick="selectARTarget('${target.id}')">
+      <span class="ar-marker-mini" id="arMarker-${target.id}" aria-hidden="true"></span>
+      <span><strong>${target.name}</strong><small>Marcador QR de escaneo</small></span>
       <img src="${target.image}" alt="">
-      <span><strong>${target.name}</strong><small>${target.description}</small></span>
     </button>
   `).join("");
-  selectARTarget(selectedARTargetId, false);
+  arTargets.forEach(target => renderInlineQr(document.getElementById(`arMarker-${target.id}`), getARTargetLink(target.id), 58));
+  selectARTarget(selectedARTargetId, false, false);
 }
 
-window.selectARTarget = function(targetId, rerenderList = true) {
+window.selectARTarget = function(targetId, rerenderList = true, reveal = false) {
   const target = arTargets.find(item => item.id === targetId) || arTargets[0];
   if (!target) return;
   selectedARTargetId = target.id;
+  if (rerenderList) renderARTargets();
+  const instructions = document.getElementById("arScanInstructions");
+  if (instructions && !detectedARTargetId) {
+    instructions.innerHTML = `
+      <span class="space-kicker">Marcador preparado</span>
+      <strong>${target.name}</strong>
+      <p>Apunta la cámara al QR de esta capa o usa el botón de escaneo guiado.</p>`;
+  }
+  if (reveal) revealARTarget(target.id, "manual");
+}
+
+function resetARScanState() {
+  detectedARTargetId = null;
+  const stage = document.querySelector(".ar-camera-stage");
+  const floatingCard = document.getElementById("arFloatingCard");
+  const insight = document.getElementById("arInsightPanel");
+  const question = document.getElementById("arQuestionPanel");
+  const instructions = document.getElementById("arScanInstructions");
+  if (stage) stage.classList.remove("is-camera-active", "has-detected-layer");
+  if (floatingCard) floatingCard.hidden = true;
+  if (insight) insight.hidden = true;
+  if (question) question.hidden = true;
+  if (instructions) {
+    instructions.hidden = false;
+    instructions.innerHTML = `
+      <span class="space-kicker">Escaneo pendiente</span>
+      <strong>Apunta la cámara a un marcador QR de capital</strong>
+      <p>La información aparecerá sobre la cámara únicamente cuando se detecte una capa.</p>`;
+  }
+}
+
+function revealARTarget(targetId, source = "scan") {
+  const target = arTargets.find(item => item.id === targetId) || arTargets[0];
+  if (!target) return;
+  selectedARTargetId = target.id;
+  detectedARTargetId = target.id;
+
   const image = document.getElementById("arFloatingImage");
   const label = document.getElementById("arFloatingLabel");
   const description = document.getElementById("arFloatingDescription");
   const challenge = document.getElementById("arChallengeText");
   const floatingCard = document.getElementById("arFloatingCard");
+  const question = document.getElementById("arQuestionPanel");
+  const insight = document.getElementById("arInsightPanel");
+  const instructions = document.getElementById("arScanInstructions");
+  const stage = document.querySelector(".ar-camera-stage");
+
   if (image) {
     image.src = target.image;
     image.alt = target.name;
@@ -1573,8 +1734,32 @@ window.selectARTarget = function(targetId, rerenderList = true) {
   if (label) label.textContent = target.name;
   if (description) description.textContent = target.description;
   if (challenge) challenge.textContent = target.challenge;
-  if (floatingCard) floatingCard.style.setProperty("--ar-accent", target.color);
-  if (rerenderList) renderARTargets();
+  if (floatingCard) {
+    floatingCard.hidden = false;
+    floatingCard.style.setProperty("--ar-accent", target.color);
+    floatingCard.classList.remove("is-detected");
+    void floatingCard.offsetWidth;
+    floatingCard.classList.add("is-detected");
+  }
+  if (question) question.hidden = false;
+  if (instructions) instructions.hidden = true;
+  if (stage) stage.classList.add("is-camera-active", "has-detected-layer");
+  if (insight) {
+    insight.hidden = false;
+    document.getElementById("arInsightTitle").textContent = target.name;
+    document.getElementById("arInsightDetail").textContent = target.detail || target.description;
+    document.getElementById("arInsightFacts").innerHTML = (target.facts || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+    document.getElementById("arInsightActions").innerHTML = (target.actions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+    document.getElementById("arRelatedResources").innerHTML = (target.resources || []).map(item => `<span>${escapeHtml(item)}</span>`).join("");
+  }
+  renderARTargets();
+  if (arActiveModuleId && arActiveMediaIndex !== null) {
+    saveViewedResource(arActiveModuleId, arActiveMediaIndex);
+    markActivityComplete(arActiveModuleId, "ar");
+    unlockBadge("laboratorio-ar");
+    if (currentModuleId === arActiveModuleId) renderModuleMedia(courseData[arActiveModuleId].media || []);
+  }
+  showToast(source === "scan" ? `Capa detectada: ${target.name}.` : `Escaneo guiado: ${target.name}.`);
 }
 
 function renderARQrCode() {
@@ -1598,18 +1783,77 @@ function renderARQrCode() {
 
 function initializeARView(returnView = "homeView") {
   arReturnView = returnView;
+  const urlTarget = new URLSearchParams(window.location.search).get("target");
+  if (arTargets.some(target => target.id === urlTarget)) selectedARTargetId = urlTarget;
+  resetARScanState();
   renderARTargets();
   renderARQrCode();
   document.getElementById("arCameraFallback").hidden = false;
   document.getElementById("btnStartARCamera").hidden = false;
   document.getElementById("btnStopARCamera").hidden = true;
+  if (urlTarget && arTargets.some(target => target.id === urlTarget)) {
+    window.setTimeout(() => revealARTarget(urlTarget, "scan"), 350);
+  }
 }
 
 window.openARExperience = function(modId, mediaIndex) {
-  saveViewedResource(modId, mediaIndex);
-  updateModuleLocks();
+  arActiveModuleId = modId;
+  arActiveMediaIndex = mediaIndex;
   initializeARView("moduleView");
   switchView("arView");
+}
+
+function decodeARTargetFromValue(value) {
+  try {
+    const url = new URL(value);
+    if (url.searchParams.get("experience") !== "capitales") return null;
+    const target = url.searchParams.get("target");
+    return arTargets.some(item => item.id === target) ? target : null;
+  } catch {
+    return arTargets.some(item => item.id === value) ? value : null;
+  }
+}
+
+function stopARScannerLoop() {
+  if (arScanTimer) {
+    window.clearTimeout(arScanTimer);
+    arScanTimer = null;
+  }
+}
+
+async function scanARFrame() {
+  const video = document.getElementById("arCamera");
+  if (!arCameraStream || !arBarcodeDetector || !video || video.readyState < 2) return;
+  try {
+    const codes = await arBarcodeDetector.detect(video);
+    const detected = codes
+      .map(code => decodeARTargetFromValue(code.rawValue || ""))
+      .find(Boolean);
+    if (detected) {
+      revealARTarget(detected, "scan");
+      return;
+    }
+  } catch (error) {
+    console.warn("No fue posible leer el marcador AR.", error);
+  }
+  if (arCameraStream) {
+    arScanTimer = window.setTimeout(scanARFrame, 700);
+  }
+}
+
+async function startARScannerLoop() {
+  stopARScannerLoop();
+  if (!("BarcodeDetector" in window)) {
+    showToast("Tu navegador no detecta QR desde video. Usa el escaneo guiado del marcador seleccionado.");
+    return;
+  }
+  try {
+    arBarcodeDetector = arBarcodeDetector || new BarcodeDetector({ formats: ["qr_code"] });
+    arScanTimer = window.setTimeout(scanARFrame, 500);
+  } catch (error) {
+    console.warn("BarcodeDetector no está disponible.", error);
+    showToast("Usa el escaneo guiado: este navegador no activó el lector QR.");
+  }
 }
 
 async function startARCamera() {
@@ -1625,10 +1869,12 @@ async function startARCamera() {
     });
     video.srcObject = arCameraStream;
     await video.play();
+    document.querySelector(".ar-camera-stage")?.classList.add("is-camera-active");
     document.getElementById("arCameraFallback").hidden = true;
     document.getElementById("btnStartARCamera").hidden = true;
     document.getElementById("btnStopARCamera").hidden = false;
-    showToast("Cámara activada. Selecciona una capa para explorarla.");
+    startARScannerLoop();
+    showToast("Cámara activada. Apunta a un marcador QR de capital.");
   } catch (error) {
     console.warn("No fue posible activar la cámara.", error);
     showToast("No se pudo activar la cámara. Revisa el permiso del navegador.");
@@ -1636,6 +1882,7 @@ async function startARCamera() {
 }
 
 function stopARCamera() {
+  stopARScannerLoop();
   if (arCameraStream) {
     arCameraStream.getTracks().forEach(track => track.stop());
     arCameraStream = null;
@@ -1644,6 +1891,7 @@ function stopARCamera() {
   if (video) video.srcObject = null;
   const fallback = document.getElementById("arCameraFallback");
   if (fallback) fallback.hidden = false;
+  document.querySelector(".ar-camera-stage")?.classList.remove("is-camera-active", "has-detected-layer");
   const startButton = document.getElementById("btnStartARCamera");
   const stopButton = document.getElementById("btnStopARCamera");
   if (startButton) startButton.hidden = false;
@@ -1921,7 +2169,20 @@ window.finalizeCapitalMatrix = function(event, modId, mediaIndex) {
     ...(activityProgressByModule[modId] || {}),
     capitalMatrix: data
   };
-  saveViewedResource(modId, mediaIndex);
+  if (mediaIndex !== null && mediaIndex !== undefined) saveViewedResource(modId, mediaIndex);
+  if (modId === 2) {
+    quizResultsByModule[2] = {
+      type: "capitalMatrix",
+      score: Math.round((data.total / 150) * 100),
+      rawScore: data.total,
+      total: 150,
+      level: data.level,
+      passed: true,
+      date: new Date().toLocaleDateString("es-CO")
+    };
+    saveCertificate(2, courseData[2].title);
+  }
+  saveUserProgress();
   renderModuleMedia(courseData[modId].media || []);
   updateModuleLocks();
   renderQuizLaunch();
@@ -1930,7 +2191,7 @@ window.finalizeCapitalMatrix = function(event, modId, mediaIndex) {
     status.textContent = `Actividad completada: ${data.total}/150 · ${data.level}.`;
   }
   showToast(`Matriz completada: ${data.total} de 150 puntos.`);
-  openCapitalMatrix(modId, mediaIndex, courseData[modId].media[mediaIndex], true);
+  openCapitalMatrix(modId, mediaIndex, mediaIndex === null || mediaIndex === undefined ? capitalMatrixActivity : courseData[modId].media[mediaIndex], true);
 }
 
 window.downloadCapitalMatrixBalance = function(modId) {
@@ -2173,9 +2434,178 @@ function getSpritePosition(index) {
   return `${[0, 50, 100][index % 3]}% ${index < 3 ? 0 : 100}%`;
 }
 
+function getSorterCard(activity, cardId) {
+  return activity?.cards?.find(card => card.id === cardId);
+}
+
+function renderSortingReinforcement(activity, practiceMode = false, providedAssignments = null) {
+  const container = document.getElementById("reinforcementContainer");
+  if (!container || !activity) return;
+  const moduleProgress = activityProgressByModule[currentModuleId] || {};
+  const saved = providedAssignments || (practiceMode ? {} : moduleProgress.sorterAnswers || {});
+  const isSolved = !!moduleProgress.memory && !practiceMode;
+  activeSorterActivity = activity;
+  sorterAssignments = { ...saved };
+  selectedSorterCardId = null;
+  reinforcementAttempts = 0;
+
+  const unassignedCards = activity.cards.filter(card => !sorterAssignments[card.id]);
+  container.innerHTML = `
+    <div class="activity-command-bar">
+      <div>
+        <span class="activity-kicker">Misión de clasificación</span>
+        <h3>${activity.title}</h3>
+        <p>${activity.instruction}</p>
+      </div>
+      <div class="activity-stats" aria-label="Progreso de la clasificación">
+        <span><strong id="sorterPlaced">${Object.keys(sorterAssignments).length}/${activity.cards.length}</strong> ubicadas</span>
+        <span><strong id="sorterAttempts">--</strong> intentos</span>
+        <span><strong id="sorterScore">${isSolved ? '100%' : '--'}</strong> precisión</span>
+      </div>
+    </div>
+    <div class="sorter-workbench">
+      <section class="sorter-card-pool" aria-label="Evidencias por clasificar">
+        <h4>Evidencias del caso</h4>
+        <div class="sorter-card-list" id="sorterCardPool">
+          ${unassignedCards.map(card => renderSorterCard(card)).join("") || '<p class="sorter-empty">Todas las evidencias están ubicadas.</p>'}
+        </div>
+      </section>
+      <section class="sorter-zones" aria-label="Categorías de clasificación">
+        ${activity.categories.map(category => `
+          <div class="sorter-zone" data-sorter-zone="${category.id}" ondragover="event.preventDefault()" ondrop="dropSorterCard(event, '${category.id}')">
+            <header>
+              <strong>${category.label}</strong>
+              <button type="button" class="hint-chip" onclick="showSorterHint('${category.id}')">Pista</button>
+            </header>
+            <small>${category.hint}</small>
+            <div class="sorter-zone-cards" id="sorter-zone-${category.id}">
+              ${activity.cards.filter(card => sorterAssignments[card.id] === category.id).map(card => renderSorterCard(card, true)).join("")}
+            </div>
+            <button type="button" class="drop-zone-button" onclick="placeSelectedSorterCard('${category.id}')">Soltar aquí</button>
+          </div>
+        `).join("")}
+      </section>
+    </div>
+    <div class="reinforcement-actions">
+      <button type="button" class="ghost-button" onclick="resetReinforcement()">Reiniciar misión</button>
+      <button type="button" class="start-button" onclick="checkSortingReinforcement()">Comprobar clasificación</button>
+    </div>
+    <p class="reinforcement-feedback ${isSolved ? 'is-success' : ''}" id="reinforcementFeedback" role="status">${isSolved ? 'Misión completada y guardada. Puedes revisarla o reiniciarla para practicar.' : 'Arrastra cada evidencia o selecciónala y toca una zona.'}</p>
+  `;
+  refreshSorterState(isSolved);
+}
+
+function renderSorterCard(card, assigned = false) {
+  return `
+    <button type="button" class="sorter-card ${assigned ? 'is-assigned' : ''}" draggable="true"
+      data-sorter-card="${card.id}"
+      ondragstart="startSorterDrag(event, '${card.id}')"
+      onclick="selectSorterCard('${card.id}', this)">
+      <span>${assigned ? 'Ubicada' : 'Evidencia'}</span>
+      <strong>${escapeHtml(card.text)}</strong>
+    </button>`;
+}
+
+function refreshSorterState(isSolved = false) {
+  const placed = document.getElementById("sorterPlaced");
+  if (placed) placed.textContent = `${Object.keys(sorterAssignments).length}/${activeSorterActivity?.cards?.length || 0}`;
+  document.querySelectorAll(".sorter-card").forEach(card => {
+    const id = card.dataset.sorterCard;
+    const expected = getSorterCard(activeSorterActivity, id)?.answer;
+    const assigned = sorterAssignments[id];
+    card.classList.toggle("is-selected", id === selectedSorterCardId);
+    if (isSolved || card.dataset.checked === "true") {
+      card.classList.toggle("is-correct", assigned === expected);
+      card.classList.toggle("is-wrong", !!assigned && assigned !== expected);
+    }
+  });
+}
+
+window.startSorterDrag = function(event, cardId) {
+  event.dataTransfer.setData("text/plain", cardId);
+  event.dataTransfer.effectAllowed = "move";
+}
+
+window.selectSorterCard = function(cardId, button) {
+  selectedSorterCardId = selectedSorterCardId === cardId ? null : cardId;
+  document.querySelectorAll(".sorter-card").forEach(card => card.classList.toggle("is-selected", card === button && !!selectedSorterCardId));
+  document.querySelectorAll(".sorter-zone").forEach(zone => zone.classList.toggle("is-ready", !!selectedSorterCardId));
+}
+
+window.dropSorterCard = function(event, categoryId) {
+  event.preventDefault();
+  assignSorterCard(event.dataTransfer.getData("text/plain"), categoryId);
+}
+
+window.placeSelectedSorterCard = function(categoryId) {
+  if (selectedSorterCardId) assignSorterCard(selectedSorterCardId, categoryId);
+}
+
+function assignSorterCard(cardId, categoryId) {
+  const card = getSorterCard(activeSorterActivity, cardId);
+  const category = activeSorterActivity?.categories?.find(item => item.id === categoryId);
+  if (!card || !category) return;
+  const nextAssignments = { ...sorterAssignments, [cardId]: categoryId };
+  renderSortingReinforcement(activeSorterActivity, true, nextAssignments);
+  const feedback = document.getElementById("reinforcementFeedback");
+  if (feedback) feedback.textContent = `Ubicaste una evidencia en ${category.label}. Comprueba cuando completes todas.`;
+}
+
+window.showSorterHint = function(categoryId) {
+  const category = activeSorterActivity?.categories?.find(item => item.id === categoryId);
+  const feedback = document.getElementById("reinforcementFeedback");
+  if (category && feedback) {
+    feedback.className = "reinforcement-feedback is-warning";
+    feedback.textContent = `Pista para ${category.label}: ${category.hint}`;
+  }
+}
+
+window.checkSortingReinforcement = function() {
+  const activity = activeSorterActivity;
+  const feedback = document.getElementById("reinforcementFeedback");
+  if (!activity || !feedback) return;
+  reinforcementAttempts++;
+  let correct = 0;
+  activity.cards.forEach(card => {
+    if (sorterAssignments[card.id] === card.answer) correct++;
+  });
+  const total = activity.cards.length;
+  const percent = Math.round((correct / total) * 100);
+  document.querySelectorAll(".sorter-card").forEach(card => { card.dataset.checked = "true"; });
+  const attempts = document.getElementById("sorterAttempts");
+  const score = document.getElementById("sorterScore");
+  if (attempts) attempts.textContent = String(reinforcementAttempts);
+  if (score) score.textContent = `${percent}%`;
+  refreshSorterState(true);
+
+  activityProgressByModule[currentModuleId] = {
+    ...(activityProgressByModule[currentModuleId] || {}),
+    sorterAnswers: { ...sorterAssignments }
+  };
+  saveUserProgress();
+
+  if (correct === total) {
+    activityProgressByModule[currentModuleId] = {
+      ...(activityProgressByModule[currentModuleId] || {}),
+      sorterStats: { attempts: reinforcementAttempts, score: percent, updatedAt: new Date().toISOString() }
+    };
+    markActivityComplete(currentModuleId, "memory");
+    unlockBadge("reto-clasificacion");
+    launchActivityCelebration("reinforcementContainer");
+    feedback.className = "reinforcement-feedback is-success";
+    feedback.textContent = `Clasificación correcta: ${correct}/${total}. Tu análisis quedó guardado.`;
+    const speech = document.getElementById("companionSpeech");
+    if (speech) speech.textContent = `Muy bien, ${getStudentName()}. Ya analizaste evidencias con criterio universitario. Sigue con el laboratorio de decisiones.`;
+  } else {
+    feedback.className = "reinforcement-feedback is-warning";
+    feedback.textContent = `Tienes ${correct}/${total} correctas. Revisa las tarjetas marcadas y pide pistas en las categorías difíciles.`;
+  }
+}
+
 function renderReinforcement(activity, practiceMode = false) {
   const container = document.getElementById("reinforcementContainer");
   if (!container || !activity) return;
+  if (activity.mode === "sorter") return renderSortingReinforcement(activity, practiceMode);
   const moduleActivityProgress = activityProgressByModule[currentModuleId] || {};
   const progressSolved = !!moduleActivityProgress.memory;
   const savedStats = moduleActivityProgress.memoryStats || {};
@@ -2350,9 +2780,125 @@ function renderFillPrompt(item, index, savedValue, isSolved) {
     </div>`;
 }
 
+function renderDecisionReview(activity, practiceMode = false) {
+  const container = document.getElementById("reviewActivitiesContainer");
+  if (!container || !activity) return;
+  const saved = practiceMode ? {} : activityProgressByModule[currentModuleId]?.reviewAnswers || {};
+  const isSolved = !!activityProgressByModule[currentModuleId]?.review && !practiceMode;
+  decisionReviewAnswers = [...(saved.decisions || [])];
+
+  container.innerHTML = `
+    <div class="activity-command-bar review-command-bar">
+      <div>
+        <span class="activity-kicker">Laboratorio de decisiones</span>
+        <h3>${activity.title}</h3>
+        <p>${activity.instruction}</p>
+      </div>
+      <div class="review-progress" aria-live="polite"><strong id="reviewAnswered">${decisionReviewAnswers.filter(value => value !== undefined && value !== null).length}</strong><span>de ${activity.decisions.length}<br>decisiones</span></div>
+    </div>
+    <div class="decision-lab-grid">
+      ${activity.decisions.map((decision, index) => `
+        <article class="decision-card ${isSolved ? 'is-checked' : ''}" data-decision-card="${index}">
+          <span class="decision-number">${String(index + 1).padStart(2, "0")}</span>
+          <h3>${escapeHtml(decision.prompt)}</h3>
+          <div class="decision-options">
+            ${decision.options.map((option, optionIndex) => `
+              <button type="button"
+                class="${decisionReviewAnswers[index] === optionIndex ? 'is-selected' : ''}"
+                onclick="selectDecisionReview(${index}, ${optionIndex}, this)"
+                ${isSolved ? 'disabled' : ''}>
+                <b>${String.fromCharCode(65 + optionIndex)}</b>
+                <span>${escapeHtml(option)}</span>
+              </button>
+            `).join("")}
+          </div>
+          <div class="decision-card-actions">
+            <button type="button" class="hint-chip" onclick="showDecisionHint(${index})">Dame una pista</button>
+            <p class="decision-hint" id="decisionHint-${index}" hidden>${escapeHtml(decision.hint)}</p>
+          </div>
+          <p class="decision-feedback" id="decisionFeedback-${index}" ${isSolved ? '' : 'hidden'}>${isSolved ? escapeHtml(decision.feedback) : ''}</p>
+        </article>
+      `).join("")}
+    </div>
+    <div class="reinforcement-actions review-actions">
+      <button type="button" class="ghost-button" onclick="resetReviewActivities()">Reiniciar decisiones</button>
+      <button type="button" class="start-button" onclick="checkDecisionReview()">Comprobar decisiones</button>
+    </div>
+    <p class="reinforcement-feedback ${isSolved ? 'is-success' : ''}" id="reviewFeedback" role="status">${isSolved ? 'Laboratorio resuelto y guardado. Puedes repetirlo para practicar.' : 'Selecciona una respuesta por caso. Las pistas orientan, no resuelven por ti.'}</p>
+  `;
+  if (isSolved) markDecisionCards(activity, true);
+}
+
+window.selectDecisionReview = function(index, optionIndex, button) {
+  decisionReviewAnswers[index] = optionIndex;
+  const card = button.closest(".decision-card");
+  card.querySelectorAll(".decision-options button").forEach(option => option.classList.remove("is-selected", "is-correct", "is-wrong"));
+  button.classList.add("is-selected");
+  const answered = decisionReviewAnswers.filter(value => value !== undefined && value !== null).length;
+  const counter = document.getElementById("reviewAnswered");
+  if (counter) counter.textContent = String(answered);
+}
+
+window.showDecisionHint = function(index) {
+  const hint = document.getElementById(`decisionHint-${index}`);
+  if (hint) hint.hidden = !hint.hidden;
+}
+
+function markDecisionCards(activity, final = false) {
+  activity.decisions.forEach((decision, index) => {
+    const card = document.querySelector(`[data-decision-card="${index}"]`);
+    if (!card) return;
+    const selected = decisionReviewAnswers[index];
+    card.classList.add("is-checked");
+    card.querySelectorAll(".decision-options button").forEach((button, optionIndex) => {
+      button.classList.toggle("is-correct", optionIndex === decision.correct);
+      button.classList.toggle("is-wrong", optionIndex === selected && selected !== decision.correct);
+      if (final) button.disabled = true;
+    });
+    const feedback = document.getElementById(`decisionFeedback-${index}`);
+    if (feedback) {
+      feedback.hidden = false;
+      feedback.textContent = decision.feedback;
+    }
+  });
+}
+
+window.checkDecisionReview = function() {
+  const activity = reviewActivitiesData[currentModuleId];
+  const feedback = document.getElementById("reviewFeedback");
+  if (!activity?.decisions || !feedback) return;
+  if (decisionReviewAnswers.filter(value => value !== undefined && value !== null).length < activity.decisions.length) {
+    showToast("Responde todas las decisiones antes de comprobar.");
+    return;
+  }
+
+  const correct = activity.decisions.reduce((sum, decision, index) =>
+    sum + (decisionReviewAnswers[index] === decision.correct ? 1 : 0), 0);
+  const total = activity.decisions.length;
+  markDecisionCards(activity, correct === total);
+  activityProgressByModule[currentModuleId] = {
+    ...(activityProgressByModule[currentModuleId] || {}),
+    reviewAnswers: { decisions: [...decisionReviewAnswers], updatedAt: new Date().toISOString() }
+  };
+  saveUserProgress();
+
+  if (correct === total) {
+    markActivityComplete(currentModuleId, "review");
+    launchActivityCelebration("reviewActivitiesContainer");
+    feedback.className = "reinforcement-feedback is-success";
+    feedback.textContent = `Decisiones correctas: ${correct}/${total}. El reto quedó guardado.`;
+    const speech = document.getElementById("companionSpeech");
+    if (speech) speech.textContent = `Excelente, ${getStudentName()}. Tus decisiones ya muestran comprensión aplicada. La evaluación se está desbloqueando.`;
+  } else {
+    feedback.className = "reinforcement-feedback is-warning";
+    feedback.textContent = `Lograste ${correct}/${total}. Revisa las pistas y ajusta tus decisiones.`;
+  }
+}
+
 function renderReviewActivities(activity, practiceMode = false) {
   const container = document.getElementById("reviewActivitiesContainer");
   if (!container || !activity) return;
+  if (activity.mode === "decisionLab") return renderDecisionReview(activity, practiceMode);
   const progressSolved = !!activityProgressByModule[currentModuleId]?.review;
   const saved = practiceMode ? {} : activityProgressByModule[currentModuleId]?.reviewAnswers || {};
   const isSolved = progressSolved && !practiceMode;
@@ -2549,7 +3095,7 @@ function openContentModal(title, bodyHtml, learnMoreResources = [], replaceCurre
   const theoryBody = document.getElementById("theoryBody");
   theoryBody.innerHTML = `${bodyHtml}${learnMore}`;
   theoryBody.scrollTop = 0;
-  document.querySelector("#theoryModal .activity-modal-content").classList.toggle("resource-modal-content", bodyHtml.includes("resource-image") || bodyHtml.includes("journal-form"));
+  document.querySelector("#theoryModal .activity-modal-content").classList.toggle("resource-modal-content", bodyHtml.includes("resource-image") || bodyHtml.includes("journal-form") || bodyHtml.includes("capital-matrix-form"));
   document.getElementById("theoryModal").classList.add("is-active");
   syncModalState();
   document.getElementById("closeTheoryBtn").focus();
@@ -2764,7 +3310,7 @@ function shuffleArray(items) {
 
 function areCoreModulesApproved() {
   return Array.from({ length: MAX_MODULES }, (_, index) => index + 1)
-    .every(id => certificates.some(cert => cert.modId === id));
+    .every(id => !!quizResultsByModule[id]?.passed || certificates.some(cert => cert.modId === id));
 }
 
 function renderFinalEvaluationPanel() {
@@ -2848,11 +3394,47 @@ window.submitFinalEvaluation = function() {
 // 5. PERFIL Y CERTIFICADOS
 // ==========================================
 
+function getBadgeDefinition(badgeId) {
+  return badgeDefinitions.find(badge => badge.id === badgeId);
+}
+
+function unlockBadge(badgeId) {
+  const badge = getBadgeDefinition(badgeId);
+  if (!badge) return;
+  if (!certificates.find(item => item.achievementId === badgeId || item.badgeId === badgeId)) {
+    certificates.push({
+      achievementId: badgeId,
+      badgeId,
+      kind: "badge",
+      modId: badge.modId || null,
+      title: badge.name,
+      description: badge.description,
+      date: new Date().toLocaleDateString("es-CO")
+    });
+    saveUserProgress();
+    showToast(`Insignia desbloqueada: ${badge.name}.`);
+  }
+}
+
 function saveCertificate(modId, modTitle) {
-  if(!certificates.find(c => c.modId === modId)) {
-    certificates.push({ modId, title: modTitle, date: new Date().toLocaleDateString('es-CO') });
+  const badge = badgeDefinitions.find(item => item.modId === modId);
+  if (badge) {
+    unlockBadge(badge.id);
+    return;
+  }
+  if (!certificates.find(c => c.modId === modId)) {
+    certificates.push({ modId, title: modTitle, date: new Date().toLocaleDateString("es-CO") });
     saveUserProgress();
   }
+}
+
+function hasUnlockedBadge(badgeId) {
+  if (certificates.some(item => item.achievementId === badgeId || item.badgeId === badgeId)) return true;
+  if (badgeId === "unidad-1-seci") return !!quizResultsByModule[1]?.passed;
+  if (badgeId === "matriz-capital") return !!quizResultsByModule[2]?.passed || !!activityProgressByModule[2]?.capitalMatrix?.completed;
+  if (badgeId === "reto-clasificacion") return Object.values(activityProgressByModule).some(progress => !!progress?.memory);
+  if (badgeId === "laboratorio-ar") return Object.values(activityProgressByModule).some(progress => !!progress?.ar);
+  return false;
 }
 
 function renderProfile() {
@@ -2865,16 +3447,32 @@ function renderProfile() {
     : `<span aria-hidden="true">👤</span>`;
 
   const certContainer = document.getElementById("profileCertCard");
-  if(certificates.length === 0) {
-    certContainer.innerHTML = `<h3 style="color:#34f5e1;">Aún no tienes certificados</h3><p style="color:#aeb9d3;">Completa las evaluaciones con 80% para obtenerlos.</p>`;
-  } else {
-    certContainer.innerHTML = certificates.map(c => `
-      <div class="certificate-list-item">
-        <div><strong>Unidad ${c.modId}</strong><br><small>${c.title} · Aprobado: ${c.date}</small></div>
-        <button class="ghost-button" onclick="openCertificate('${c.title}')">Ver Diploma</button>
+  const completedAll = areCoreModulesApproved();
+  certContainer.innerHTML = `
+    <div class="badge-board">
+      ${badgeDefinitions.map(badge => {
+        const unlocked = hasUnlockedBadge(badge.id);
+        const saved = certificates.find(item => item.achievementId === badge.id || item.badgeId === badge.id);
+        return `
+          <article class="badge-card ${unlocked ? 'is-unlocked' : 'is-locked'}">
+            <div class="badge-medal" aria-hidden="true">${badge.icon}</div>
+            <div>
+              <span>${unlocked ? `Desbloqueada${saved?.date ? ` · ${saved.date}` : ''}` : 'Bloqueada'}</span>
+              <h3>${badge.name}</h3>
+              <p>${badge.description}</p>
+              <small>${badge.condition}</small>
+            </div>
+          </article>`;
+      }).join("")}
+    </div>
+    <div class="final-certificate-card ${completedAll ? 'is-ready' : ''}">
+      <div>
+        <strong>${completedAll ? 'Certificado final disponible' : 'Certificado final bloqueado'}</strong>
+        <p>${completedAll ? 'Completaste el recorrido. Puedes generar el reconocimiento general.' : 'Completa la Unidad 1 y la evaluación final de la Unidad 2 para obtenerlo.'}</p>
       </div>
-    `).join("");
-  }
+      <button class="ghost-button" ${completedAll ? '' : 'disabled'} onclick="openCertificate('Recorrido completo: Gestión del Conocimiento y Caso Interactivo')">Ver certificado final</button>
+    </div>
+  `;
 }
 
 function compressProfilePicture(file) {
@@ -3038,7 +3636,10 @@ window.openCertificate = function(moduleName) {
 
     ctx.fillStyle = "#b68a22";
     ctx.font = 'bold 27px Georgia, "Times New Roman", serif';
-    ctx.fillText("APROBÓ LA UNIDAD:", 550, 500);
+    const certificateLabel = moduleName.toLowerCase().includes("recorrido completo")
+      ? "COMPLETÓ EL RECORRIDO:"
+      : "APROBÓ LA UNIDAD:";
+    ctx.fillText(certificateLabel, 550, 500);
     ctx.fillStyle = "#175f69";
     ctx.font = 'bold 31px "Inter", sans-serif';
     drawWrappedText(moduleName.toUpperCase(), 550, 555, 700, 38);
@@ -3157,13 +3758,33 @@ document.getElementById("btnBackFromTeam").onclick = () => { renderMap(); switch
 document.getElementById("btnGoProfile").onclick = () => { renderProfile(); switchView("profileView"); };
 document.getElementById("btnBackFromProfile").onclick = () => { renderMap(); switchView("homeView"); };
 document.getElementById("btnSyncProgress").onclick = () => syncProgressNow();
+document.getElementById("assistantForm").onsubmit = (event) => {
+  event.preventDefault();
+  const input = document.getElementById("assistantQuestion");
+  const speech = document.getElementById("companionSpeech");
+  if (!input || !speech) return;
+  const question = input.value.trim();
+  speech.textContent = question
+    ? getAssistantResponse("free", question)
+    : "Escríbeme una pregunta corta sobre la teoría, la actividad, la realidad aumentada o la matriz.";
+  input.value = "";
+};
 const finalEvaluationButton = document.getElementById("btnStartFinalEvaluation");
 if (finalEvaluationButton) finalEvaluationButton.onclick = () => startFinalEvaluation();
 document.getElementById("btnContinueJourney").onclick = () => {
   openModule(areCoreModulesApproved() ? MAX_MODULES : highestUnlocked);
 };
 document.getElementById("btnStartARCamera").onclick = () => startARCamera();
+document.getElementById("btnSimulateARScan").onclick = () => revealARTarget(selectedARTargetId, "manual");
 document.getElementById("btnStopARCamera").onclick = () => stopARCamera();
+document.getElementById("btnARContinueActivity").onclick = () => {
+  stopARCamera();
+  if (arReturnView === "moduleView" && currentUser) {
+    openModule(2);
+    return;
+  }
+  switchView(currentUser ? "homeView" : "loginView");
+};
 document.getElementById("btnCopyARLink").onclick = async () => {
   try {
     await navigator.clipboard.writeText(getPublicARLink());
@@ -3175,12 +3796,15 @@ document.getElementById("btnCopyARLink").onclick = async () => {
 };
 document.getElementById("btnBackFromAR").onclick = () => {
   stopARCamera();
+  arActiveModuleId = null;
+  arActiveMediaIndex = null;
   if (arReturnView === "moduleView" && currentUser) {
     openModule(2);
     return;
   }
   const url = new URL(window.location.href);
   url.searchParams.delete("experience");
+  url.searchParams.delete("target");
   window.history.replaceState({}, "", url);
   switchView(currentUser ? "homeView" : "loginView");
 };
