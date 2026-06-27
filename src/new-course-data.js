@@ -12,7 +12,7 @@ window.KNOWLEDGE_COURSE_DATA = {
             type: "image",
             title: "Del saber personal a la memoria organizacional",
             description: "Vista holográfica del conocimiento como activo intangible que se organiza, documenta y comparte.",
-            imageUrl: "Recursos/nuevo/ar-capital-intelectual.webp"
+            imageUrl: "Recursos/nuevo/infografia-conocimiento-organizacional.svg"
           }
         ],
         content: `<p>La <strong>Gestión del Conocimiento</strong> es el proceso mediante el cual una organización crea, organiza, comparte y utiliza conocimiento para mejorar el aprendizaje, la innovación y el desempeño institucional.</p>
@@ -31,7 +31,7 @@ window.KNOWLEDGE_COURSE_DATA = {
             type: "image",
             title: "Espiral de creación del conocimiento",
             description: "El conocimiento crece cuando la experiencia circula, se explica, se integra y vuelve a la práctica.",
-            imageUrl: "Recursos/nuevo/ar-capital-intelectual.webp"
+            imageUrl: "Recursos/nuevo/infografia-conocimiento-organizacional.svg"
           }
         ],
         content: `<p>El modelo SECI de Nonaka y Takeuchi explica la creación del conocimiento como una espiral continua entre saber tácito y explícito.</p>
@@ -48,7 +48,7 @@ window.KNOWLEDGE_COURSE_DATA = {
             type: "image",
             title: "Personas que aprenden juntas",
             description: "El capital humano se fortalece cuando las experiencias individuales se convierten en aprendizaje colectivo.",
-            imageUrl: "Recursos/nuevo/ar-capital-humano.webp"
+            imageUrl: "Recursos/nuevo/infografia-aprendizaje-colectivo.svg"
           }
         ],
         content: `<p>El aprendizaje organizacional es el proceso mediante el cual una organización adquiere, construye y transforma conocimientos para mejorar sus acciones y resultados.</p>
@@ -64,7 +64,7 @@ window.KNOWLEDGE_COURSE_DATA = {
             type: "image",
             title: "Redes que convierten ideas en valor",
             description: "La innovación emerge de personas, saberes documentados, relaciones y tecnología.",
-            imageUrl: "Recursos/nuevo/ar-capital-relacional.webp"
+            imageUrl: "Recursos/nuevo/infografia-capital-relacional.svg"
           }
         ],
         content: `<p>La innovación consiste en generar ideas, productos, procesos o estrategias nuevas que produzcan mejoras significativas. Joseph Schumpeter la relaciona con la introducción de nuevas combinaciones productivas.</p>
@@ -79,7 +79,7 @@ window.KNOWLEDGE_COURSE_DATA = {
             type: "image",
             title: "Ecosistema digital de conocimiento",
             description: "Plataformas, datos, inteligencia artificial y colaboración conectadas alrededor de una memoria institucional.",
-            imageUrl: "Recursos/nuevo/ar-ecosistema-digital.webp"
+            imageUrl: "Recursos/nuevo/infografia-transformacion-digital.svg"
           }
         ],
         content: `<p>La transformación digital integra tecnologías para mejorar procesos, comunicación, aprendizaje, productividad y servicios. No consiste únicamente en comprar herramientas: implica transformar la cultura organizacional.</p>
@@ -105,21 +105,21 @@ window.KNOWLEDGE_COURSE_DATA = {
         type: "infografia",
         title: "Mapa visual: conocimiento organizacional",
         description: "Explora cómo el conocimiento tácito y explícito alimenta la memoria institucional.",
-        imageUrl: "Recursos/nuevo/ar-capital-intelectual.webp",
+        imageUrl: "Recursos/nuevo/infografia-conocimiento-organizacional.svg",
         content: "<p>Observa qué saberes dependen de las personas y cuáles ya están documentados. Una estrategia equilibrada debe proteger ambos.</p>"
       },
       {
         type: "infografia",
         title: "Personas y aprendizaje colectivo",
         description: "Relaciona capital humano, aprendizaje en equipo y organizaciones inteligentes.",
-        imageUrl: "Recursos/nuevo/ar-capital-humano.webp",
+        imageUrl: "Recursos/nuevo/infografia-aprendizaje-colectivo.svg",
         content: "<p>El conocimiento no circula por sí solo. Requiere confianza, diálogo, comunidades de práctica y oportunidades para aprender haciendo.</p>"
       },
       {
         type: "infografia",
         title: "Transformación digital con propósito",
         description: "Analiza un ecosistema de plataformas, datos, IA y colaboración.",
-        imageUrl: "Recursos/nuevo/ar-ecosistema-digital.webp",
+        imageUrl: "Recursos/nuevo/infografia-transformacion-digital.svg",
         content: "<p>La herramienta es solo una parte. El valor aparece cuando tecnología, procesos, cultura y necesidades de las personas se alinean.</p>"
       }
     ]
@@ -138,28 +138,28 @@ window.KNOWLEDGE_COURSE_DATA = {
       {
         id: "2.2",
         title: "Capital humano",
-        learnMoreResources: [{ type: "image", title: "Capital humano", description: "Habilidades, experiencia, motivación, creatividad y capacidad de aprender.", imageUrl: "Recursos/nuevo/ar-capital-humano.webp" }],
+        learnMoreResources: [{ type: "image", title: "Capital humano", description: "Habilidades, experiencia, motivación, creatividad y capacidad de aprender.", imageUrl: "Recursos/nuevo/infografia-capital-humano.svg" }],
         content: `<p>El capital humano reúne conocimientos, habilidades, experiencias, creatividad, motivación y capacidades de las personas. No pertenece de forma automática a la institución: necesita condiciones para desarrollarse y compartirse.</p>
         <p>En el caso, incluye la experiencia docente, las competencias digitales, el liderazgo académico y la disposición para colaborar.</p>`
       },
       {
         id: "2.3",
         title: "Capital intelectual",
-        learnMoreResources: [{ type: "image", title: "Capital intelectual", description: "Memoria institucional, procesos, investigaciones, bases de datos y activos intangibles.", imageUrl: "Recursos/nuevo/ar-capital-intelectual.webp" }],
+        learnMoreResources: [{ type: "image", title: "Capital intelectual", description: "Memoria institucional, procesos, investigaciones, bases de datos y activos intangibles.", imageUrl: "Recursos/nuevo/infografia-capital-intelectual.svg" }],
         content: `<p>El capital intelectual integra los activos intangibles que permiten reutilizar conocimiento: metodologías, investigaciones, protocolos, bases de datos, propiedad intelectual, repositorios y memoria organizacional.</p>
         <p>En la Universidad Horizonte está fragmentado: parte del saber vive solo en las personas y parte se encuentra en archivos difíciles de localizar.</p>`
       },
       {
         id: "2.4",
         title: "Capital relacional",
-        learnMoreResources: [{ type: "image", title: "Capital relacional", description: "Confianza y vínculos con estudiantes, egresados, aliados, comunidades y organizaciones.", imageUrl: "Recursos/nuevo/ar-capital-relacional.webp" }],
+        learnMoreResources: [{ type: "image", title: "Capital relacional", description: "Confianza y vínculos con estudiantes, egresados, aliados, comunidades y organizaciones.", imageUrl: "Recursos/nuevo/infografia-capital-relacional.svg" }],
         content: `<p>El capital relacional está formado por los vínculos de confianza con estudiantes, egresados, proveedores, comunidades, instituciones y aliados estratégicos.</p>
         <p>No se limita a una lista de contactos. Se fortalece cuando las relaciones generan intercambio, aprendizaje, legitimidad y proyectos compartidos.</p>`
       },
       {
         id: "2.5",
         title: "Herramientas tecnológicas y TIC",
-        learnMoreResources: [{ type: "image", title: "Ecosistema digital", description: "Tecnología conectada con procesos de creación, acceso y transferencia del conocimiento.", imageUrl: "Recursos/nuevo/ar-ecosistema-digital.webp" }],
+        learnMoreResources: [{ type: "image", title: "Ecosistema digital", description: "Tecnología conectada con procesos de creación, acceso y transferencia del conocimiento.", imageUrl: "Recursos/nuevo/infografia-ecosistema-digital.svg" }],
         content: `<p>Las TIC facilitan creación, almacenamiento, acceso, intercambio y aplicación del conocimiento. Pueden incluir LMS, repositorios, comunidades virtuales, videoconferencia, analítica, asistentes de IA, simuladores y experiencias inmersivas.</p>
         <p>Una solución sostenible debe integrar gobernanza, formación, accesibilidad, seguridad, calidad de contenidos e indicadores de uso. La tecnología no reemplaza la cultura de aprendizaje: la hace visible y escalable.</p>`
       }
@@ -176,28 +176,28 @@ window.KNOWLEDGE_COURSE_DATA = {
         type: "infografia",
         title: "Objetivo visual: capital humano",
         description: "Examina capacidades, experiencia, motivación y aprendizaje.",
-        imageUrl: "Recursos/nuevo/ar-capital-humano.webp",
+        imageUrl: "Recursos/nuevo/infografia-capital-humano.svg",
         content: "<p>Busca evidencias de saber experto, competencias digitales, motivación y oportunidades de mentoría.</p>"
       },
       {
         type: "infografia",
         title: "Objetivo visual: capital intelectual",
         description: "Reconoce memoria institucional y activos intangibles.",
-        imageUrl: "Recursos/nuevo/ar-capital-intelectual.webp",
+        imageUrl: "Recursos/nuevo/infografia-capital-intelectual.svg",
         content: "<p>Identifica qué debe documentarse, organizarse, protegerse y hacerse reutilizable.</p>"
       },
       {
         type: "infografia",
         title: "Objetivo visual: capital relacional",
         description: "Analiza confianza, redes, aliados y transferencia externa.",
-        imageUrl: "Recursos/nuevo/ar-capital-relacional.webp",
+        imageUrl: "Recursos/nuevo/infografia-capital-relacional.svg",
         content: "<p>Valora la calidad de los vínculos y su capacidad para producir conocimiento compartido.</p>"
       },
       {
         type: "infografia",
         title: "Objetivo visual: ecosistema digital",
         description: "Conecta plataformas, datos, IA, colaboración y seguridad.",
-        imageUrl: "Recursos/nuevo/ar-ecosistema-digital.webp",
+        imageUrl: "Recursos/nuevo/infografia-ecosistema-digital.svg",
         content: "<p>Selecciona herramientas por su función pedagógica y organizacional, no por novedad.</p>"
       }
     ]
@@ -218,6 +218,7 @@ window.KNOWLEDGE_BADGES = [
     id: "unidad-1-seci",
     modId: 1,
     icon: "SECI",
+    imageUrl: "Recursos/nuevo/insignia-seci.svg",
     name: "Arquitecto SECI",
     description: "Domina la creación y transferencia del conocimiento organizacional.",
     condition: "Aprobar la evaluación de la Unidad 1 con mínimo 80%."
@@ -226,6 +227,7 @@ window.KNOWLEDGE_BADGES = [
     id: "unidad-2-estratega",
     modId: 2,
     icon: "U2",
+    imageUrl: "Recursos/nuevo/insignia-estratega.svg",
     name: "Estratega del Conocimiento",
     description: "Diseña una respuesta institucional para proteger y movilizar el conocimiento.",
     condition: "Completar el Caso Integrador de la Unidad 2 con mínimo 80%."
@@ -234,6 +236,7 @@ window.KNOWLEDGE_BADGES = [
     id: "laboratorio-ar",
     activity: "ar",
     icon: "AR",
+    imageUrl: "Recursos/nuevo/insignia-ar.svg",
     name: "Explorador Aumentado",
     description: "Activa una capa de realidad aumentada y relaciona el marcador con el caso.",
     condition: "Escanear al menos una capa del laboratorio AR."
@@ -242,6 +245,7 @@ window.KNOWLEDGE_BADGES = [
     id: "matriz-capital",
     finalEvaluation: true,
     icon: "150",
+    imageUrl: "Recursos/nuevo/insignia-capital.svg",
     name: "Capital Personal Estratégico",
     description: "Completa la matriz, interpreta tus capitales y presenta tu balance final.",
     condition: "Finalizar la evaluación de Matriz de Capital Personal."

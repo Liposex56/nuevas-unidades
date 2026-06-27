@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Infografía: aprendizaje colectivo</title>
+  <desc id="desc">Síntesis visual de aprendizaje organizacional y comunidades de práctica.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#081512"/><stop offset=".62" stop-color="#143a34"/><stop offset="1" stop-color="#1d2440"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-opacity=".32"/></filter>
+  </defs>
+  <rect width="1200" height="760" rx="36" fill="url(#bg)"/>
+  <text x="70" y="82" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">APRENDIZAJE ORGANIZACIONAL</text>
+  <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Personas que aprenden juntas</text>
+  <text x="70" y="184" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="24">El aprendizaje crece cuando la experiencia individual se convierte en diálogo, práctica y mejora colectiva.</text>
+
+  <g transform="translate(82 242)" filter="url(#shadow)">
+    <circle cx="205" cy="190" r="150" fill="#102a25" stroke="#5ee2c2" stroke-width="4"/>
+    <circle cx="205" cy="112" r="44" fill="#5ee2c2"/>
+    <circle cx="136" cy="214" r="44" fill="#8ea8ff"/>
+    <circle cx="274" cy="214" r="44" fill="#f3c75f"/>
+    <path d="M160 158c30 29 60 29 90 0M154 250c34 34 68 34 102 0" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+    <text x="205" y="398" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="27" font-weight="900" text-anchor="middle">Comunidad de práctica</text>
+  </g>
+
+  <g transform="translate(470 236)" font-family="Inter,Segoe UI,sans-serif">
+    <rect width="650" height="360" rx="28" fill="#10221f" stroke="#355d52" stroke-width="2"/>
+    <text x="38" y="60" fill="#f3c75f" font-size="27" font-weight="900">Cinco movimientos clave</text>
+    <g transform="translate(40 95)">
+      <rect width="260" height="72" rx="18" fill="#17302c"/><text x="24" y="32" fill="#5ee2c2" font-size="20" font-weight="900">1. Dominio personal</text><text x="24" y="57" fill="#cfe8e0" font-size="17">Aprender y mejorar de forma continua.</text>
+      <rect x="315" width="260" height="72" rx="18" fill="#17302c"/><text x="339" y="32" fill="#8ea8ff" font-size="20" font-weight="900">2. Modelos mentales</text><text x="339" y="57" fill="#d7ddf4" font-size="17">Revisar supuestos y creencias.</text>
+      <rect y="98" width="260" height="72" rx="18" fill="#17302c"/><text x="24" y="130" fill="#f3c75f" font-size="20" font-weight="900">3. Visión compartida</text><text x="24" y="155" fill="#f3ead0" font-size="17">Construir metas comunes.</text>
+      <rect x="315" y="98" width="260" height="72" rx="18" fill="#17302c"/><text x="339" y="130" fill="#86d69f" font-size="20" font-weight="900">4. Aprendizaje en equipo</text><text x="339" y="155" fill="#dcf3e2" font-size="17">Dialogar, practicar y retroalimentar.</text>
+      <rect y="196" width="575" height="72" rx="18" fill="#23321d"/><text x="24" y="228" fill="#fff" font-size="20" font-weight="900">5. Pensamiento sistémico</text><text x="24" y="253" fill="#e5efe9" font-size="17">Entender cómo las decisiones de un área afectan a toda la organización.</text>
+    </g>
+  </g>
+
+  <g transform="translate(105 642)" font-family="Inter,Segoe UI,sans-serif" font-size="23" font-weight="850">
+    <text fill="#fff">Indicador de avance:</text>
+    <text x="245" fill="#5ee2c2">más reutilización</text>
+    <text x="465" fill="#f3c75f">menos duplicación</text>
+    <text x="700" fill="#8ea8ff">mejor colaboración</text>
+    <text x="948" fill="#86d69f">decisiones con evidencia</text>
+  </g>
+</svg>

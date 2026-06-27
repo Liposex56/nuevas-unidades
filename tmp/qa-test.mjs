@@ -79,10 +79,15 @@ try {
   assert(await page.locator(".mindmap-node").count() === 5, "La Unidad 1 contiene cinco temas teoricos.");
   assert(await page.locator(".sorter-zone").count() === 6, "La Unidad 1 conserva la clasificacion compleja por zonas.");
   assert(await page.locator(".decision-card").count() === 3, "La Unidad 1 conserva decisiones con pistas.");
-  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 1, "El asistente inicia como chat con historial.");
-  await page.locator(".assistant-quick-actions button").first().click();
-  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 3, "El chat registra pregunta sugerida y respuesta contextual.");
-  await page.screenshot({ path: path.join(outputDir, "02-unidad-1-chat.png"), fullPage: false });
+  assert(await page.locator("#btnOpenModuleChat").isVisible(), "La Unidad 1 ofrece boton para abrir el chat independiente.");
+  await page.locator("#btnOpenModuleChat").click();
+  await page.waitForSelector("#chatView.is-active");
+  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 1, "El asistente inicia como vista de chat con historial.");
+  await page.locator(".chat-page-actions button").first().click();
+  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 3, "El chat independiente registra pregunta sugerida y respuesta contextual.");
+  await page.screenshot({ path: path.join(outputDir, "02-chat-independiente.png"), fullPage: false });
+  await page.locator("#btnBackFromChat").click();
+  await page.waitForSelector("#moduleView.is-active");
 
   await seedProgress(page, {
     highestUnlocked: 2,
@@ -129,6 +134,7 @@ try {
   await page.waitForSelector("#moduleView.is-active");
   assert((await page.locator("#modTitle").innerText()).includes("Universidad Horizonte"), "La Unidad 2 abre el caso Universidad Horizonte.");
   assert(await page.locator(".media-card").count() === 5, "La Unidad 2 incluye laboratorio AR y cuatro apoyos visuales.");
+  assert(await page.locator(".media-thumb img").count() === 5, "Las tarjetas de recursos muestran miniaturas visuales reales.");
   assert(await page.locator(".evidence-card").count() === 6, "La Unidad 2 usa investigacion de evidencias.");
   assert(await page.locator(".route-step").count() === 7, "La Unidad 2 usa ruta de intervencion ordenable.");
   assert(await page.locator(".ecosystem-component").count() === 7, "La Unidad 2 usa constructor de ecosistema.");
@@ -178,20 +184,23 @@ try {
   assert(await page.locator(".ar-target-button").count() === 4, "El laboratorio AR presenta cuatro marcadores genericos.");
   assert(!(await page.locator("#arTargetList").innerText()).includes("Capital humano"), "Antes del escaneo no se revela ningun capital en la lista.");
   assert(await page.locator("#arFloatingCard").isHidden(), "La informacion AR no aparece antes del escaneo.");
+  assert(await page.locator("#arQrCode img").isVisible(), "AR usa el marcador visual oficial del proyecto.");
   await page.locator(".ar-target-button").nth(1).click();
   await page.locator("#btnSimulateARScan").click();
-  assert((await page.locator("#arFloatingLabel").innerText()) === "Capital intelectual", "El escaneo revela la capa seleccionada.");
-  const arText = await page.locator("#arInsightPanel").innerText();
+  await page.waitForSelector("#arTheoryView.is-active");
+  assert((await page.locator("#arTheoryTitle").innerText()) === "Capital intelectual", "El escaneo abre una vista independiente con la capa seleccionada.");
+  const arText = await page.locator("#arTheoryView").innerText();
   assert(arText.includes("Características principales"), "La capa AR muestra caracteristicas.");
   assert(arText.includes("Ejemplo aplicado"), "La capa AR muestra ejemplo aplicado.");
   assert(arText.includes("Riesgos relacionados"), "La capa AR muestra riesgos.");
-  await page.screenshot({ path: path.join(outputDir, "04-realidad-aumentada.png"), fullPage: false });
+  await page.screenshot({ path: path.join(outputDir, "04-realidad-aumentada-vista-teoria.png"), fullPage: false });
 
-  await page.locator("#btnBackFromAR").click();
+  await page.locator("#btnARTheoryContinue").click();
   await page.waitForSelector("#moduleView.is-active");
   await page.locator("#btnGoProfile").click();
   await page.waitForSelector("#profileView.is-active");
   assert(await page.locator(".badge-card.is-unlocked").count() >= 4, "El perfil muestra las cuatro insignias desbloqueadas.");
+  assert(await page.locator(".badge-card.is-unlocked .badge-medal img").count() >= 4, "Las insignias desbloqueadas se presentan como imagenes reales.");
   assert((await page.locator("#profileCertCard").innerText()).includes("Certificado final disponible"), "El certificado general solo aparece al completar las dos unidades y la matriz.");
   await page.screenshot({ path: path.join(outputDir, "05-perfil-insignias.png"), fullPage: false });
 
@@ -202,7 +211,8 @@ try {
   assert(await mobilePage.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "La experiencia AR no se desborda en celular.");
   assert(await mobilePage.locator("#arFloatingCard").isHidden(), "La vista movil inicia sin contenido AR revelado.");
   await mobilePage.locator("#btnSimulateARScan").click();
-  assert(await mobilePage.locator("#arInsightPanel").isVisible(), "La vista movil revela informacion despues del escaneo guiado.");
+  await mobilePage.waitForSelector("#arTheoryView.is-active");
+  assert((await mobilePage.locator("#arTheoryTitle").innerText()).length > 0, "La vista movil abre informacion AR en pantalla independiente.");
   await mobilePage.screenshot({ path: path.join(outputDir, "06-ar-movil.png"), fullPage: true });
   await mobileContext.close();
 

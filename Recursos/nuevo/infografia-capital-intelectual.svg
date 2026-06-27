@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Infografía: capital intelectual</title>
+  <desc id="desc">Memoria institucional, repositorios y metadatos.</desc>
+  <rect width="1200" height="760" rx="36" fill="#091221"/>
+  <path d="M0 560C240 458 430 650 650 520s350-240 550-118v358H0Z" fill="#122446"/>
+  <text x="70" y="82" fill="#8ea8ff" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">CAPITAL INTELECTUAL</text>
+  <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Memoria que se puede reutilizar</text>
+  <text x="70" y="184" fill="#d7ddf4" font-family="Inter,Segoe UI,sans-serif" font-size="24">Integra investigaciones, protocolos, bases de datos, rutas, activos intangibles y criterios de calidad.</text>
+  <g transform="translate(110 255)">
+    <rect width="420" height="320" rx="28" fill="#101b32" stroke="#8ea8ff" stroke-width="3"/>
+    <rect x="60" y="60" width="300" height="55" rx="12" fill="#8ea8ff"/>
+    <rect x="60" y="140" width="300" height="55" rx="12" fill="#5ee2c2"/>
+    <rect x="60" y="220" width="300" height="55" rx="12" fill="#f3c75f"/>
+    <text x="90" y="96" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="950">Protocolos</text>
+    <text x="90" y="176" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="950">Investigaciones</text>
+    <text x="90" y="256" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="950">Guías y casos</text>
+  </g>
+  <g transform="translate(600 255)" font-family="Inter,Segoe UI,sans-serif">
+    <rect width="470" height="320" rx="28" fill="#111d32" stroke="#31446e"/>
+    <text x="34" y="54" fill="#fff" font-size="30" font-weight="900">Para que tenga valor debe tener:</text>
+    <g font-size="22" font-weight="850">
+      <circle cx="54" cy="106" r="14" fill="#8ea8ff"/><text x="82" y="114" fill="#d7ddf4">Metadatos y taxonomía común.</text>
+      <circle cx="54" cy="158" r="14" fill="#5ee2c2"/><text x="82" y="166" fill="#d7ddf4">Responsables de actualización.</text>
+      <circle cx="54" cy="210" r="14" fill="#f3c75f"/><text x="82" y="218" fill="#d7ddf4">Permisos, calidad y trazabilidad.</text>
+      <circle cx="54" cy="262" r="14" fill="#ff806f"/><text x="82" y="270" fill="#d7ddf4">Buscador y uso medible.</text>
+    </g>
+  </g>
+  <text x="110" y="668" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="27" font-weight="900">Problema típico:</text>
+  <text x="350" y="668" fill="#d7ddf4" font-family="Inter,Segoe UI,sans-serif" font-size="27">hay mucha información, pero nadie la encuentra ni sabe si está vigente.</text>
+</svg>

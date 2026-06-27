@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Infografía: transformación digital con propósito</title>
+  <desc id="desc">Ecosistema de tecnología, cultura, datos y gobernanza.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#061713"/><stop offset=".55" stop-color="#102a35"/><stop offset="1" stop-color="#2c1e3c"/></linearGradient>
+    <radialGradient id="core" cx=".45" cy=".42" r=".7"><stop offset="0" stop-color="#5ee2c2"/><stop offset=".52" stop-color="#2fb39d"/><stop offset="1" stop-color="#17302c"/></radialGradient>
+  </defs>
+  <rect width="1200" height="760" rx="36" fill="url(#bg)"/>
+  <g fill="none" stroke="#5ee2c2" stroke-opacity=".22">
+    <path d="M140 610C270 392 470 316 690 330s322-78 410-188"/>
+    <path d="M135 160C315 268 486 260 645 188s322-24 430 88"/>
+  </g>
+  <text x="70" y="82" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">TRANSFORMACIÓN DIGITAL</text>
+  <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Tecnología al servicio del conocimiento</text>
+  <text x="70" y="184" fill="#d5e8e3" font-family="Inter,Segoe UI,sans-serif" font-size="24">Digitalizar no basta: la tecnología debe conectar personas, procesos, datos y cultura de aprendizaje.</text>
+
+  <circle cx="600" cy="398" r="145" fill="url(#core)" stroke="#e6fff8" stroke-width="4"/>
+  <text x="600" y="372" text-anchor="middle" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="28" font-weight="950">CONOCIMIENTO</text>
+  <text x="600" y="410" text-anchor="middle" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="850">accesible, confiable,</text>
+  <text x="600" y="438" text-anchor="middle" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="850">reutilizable y útil</text>
+
+  <g font-family="Inter,Segoe UI,sans-serif">
+    <g transform="translate(85 275)"><rect width="285" height="140" rx="24" fill="#10221f" stroke="#5ee2c2"/><text x="28" y="45" fill="#5ee2c2" font-size="25" font-weight="900">Personas</text><text x="28" y="82" fill="#d9ebe6" font-size="20">Formación, confianza,</text><text x="28" y="110" fill="#d9ebe6" font-size="20">participación y mentoría.</text></g>
+    <g transform="translate(830 275)"><rect width="285" height="140" rx="24" fill="#10221f" stroke="#f3c75f"/><text x="28" y="45" fill="#f3c75f" font-size="25" font-weight="900">Procesos</text><text x="28" y="82" fill="#f3ead0" font-size="20">Flujos claros, calidad,</text><text x="28" y="110" fill="#f3ead0" font-size="20">roles y seguimiento.</text></g>
+    <g transform="translate(210 548)"><rect width="300" height="128" rx="24" fill="#10221f" stroke="#8ea8ff"/><text x="28" y="45" fill="#8ea8ff" font-size="25" font-weight="900">Datos y analítica</text><text x="28" y="82" fill="#d7ddf4" font-size="20">Evidencia para decidir</text><text x="28" y="108" fill="#d7ddf4" font-size="20">y medir reutilización.</text></g>
+    <g transform="translate(690 548)"><rect width="300" height="128" rx="24" fill="#10221f" stroke="#ff806f"/><text x="28" y="45" fill="#ff806f" font-size="25" font-weight="900">Gobernanza</text><text x="28" y="82" fill="#ffe0dc" font-size="20">Seguridad, ética, acceso</text><text x="28" y="108" fill="#ffe0dc" font-size="20">y actualización continua.</text></g>
+  </g>
+  <g stroke="#fff" stroke-opacity=".85" stroke-width="4" stroke-linecap="round">
+    <path d="M370 345l91 32M830 345l-91 32M492 548l55-65M708 548l-55-65"/>
+  </g>
+</svg>

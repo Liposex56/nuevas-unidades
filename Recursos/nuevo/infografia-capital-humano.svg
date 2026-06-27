@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Infografía: capital humano</title>
+  <desc id="desc">Fortalezas, riesgos y acciones para gestionar capital humano.</desc>
+  <rect width="1200" height="760" rx="36" fill="#07110f"/>
+  <circle cx="965" cy="152" r="190" fill="#ff806f" opacity=".13"/>
+  <circle cx="178" cy="630" r="220" fill="#5ee2c2" opacity=".1"/>
+  <text x="70" y="82" fill="#ffb39f" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">CAPITAL HUMANO</text>
+  <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Experiencia que debe circular</text>
+  <text x="70" y="184" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="24">Agrupa habilidades, motivación, creatividad, liderazgo y capacidad de aprender.</text>
+  <g transform="translate(90 245)">
+    <rect width="360" height="385" rx="30" fill="#10221f" stroke="#ff806f" stroke-width="3"/>
+    <circle cx="180" cy="100" r="58" fill="#ff806f"/>
+    <path d="M88 244c25-82 159-82 184 0" fill="#f3c75f"/>
+    <circle cx="146" cy="95" r="18" fill="#07110f"/><circle cx="214" cy="95" r="18" fill="#07110f"/>
+    <path d="M146 142c28 22 40 22 68 0" stroke="#07110f" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <text x="35" y="305" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="28" font-weight="900">Clave del caso</text>
+    <text x="35" y="344" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="21">Docentes expertos tienen</text>
+    <text x="35" y="374" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="21">saber tácito en riesgo.</text>
+  </g>
+  <g transform="translate(510 258)" font-family="Inter,Segoe UI,sans-serif">
+    <rect width="280" height="150" rx="24" fill="#142721" stroke="#5ee2c2"/><text x="28" y="45" fill="#5ee2c2" font-size="24" font-weight="900">Fortalezas</text><text x="28" y="84" fill="#d9ebe6" font-size="20">Experiencia, criterio,</text><text x="28" y="112" fill="#d9ebe6" font-size="20">creatividad y liderazgo.</text>
+    <rect x="330" width="280" height="150" rx="24" fill="#2b1b19" stroke="#ff806f"/><text x="358" y="45" fill="#ff806f" font-size="24" font-weight="900">Riesgos</text><text x="358" y="84" fill="#ffe0dc" font-size="20">Rotación, jubilación,</text><text x="358" y="112" fill="#ffe0dc" font-size="20">baja transferencia.</text>
+    <rect y="190" width="610" height="178" rx="24" fill="#2b2513" stroke="#f3c75f"/><text x="28" y="50" fill="#f3c75f" font-size="25" font-weight="900">Acciones recomendadas</text><text x="28" y="94" fill="#f3ead0" font-size="21">1. Mentorías observadas y entrevistas a expertos.</text><text x="28" y="128" fill="#f3ead0" font-size="21">2. Comunidades de práctica para aprender haciendo.</text><text x="28" y="162" fill="#f3ead0" font-size="21">3. Documentar criterios, ejemplos y buenas prácticas.</text>
+  </g>
+</svg>

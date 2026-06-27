@@ -573,6 +573,7 @@ let assistantContext = {
   isCorrect: null,
   attempts: 0
 };
+let chatReturnView = "homeView";
 let arCameraStream = null;
 let arReturnView = "homeView";
 let selectedARTargetId = "humano";
@@ -581,6 +582,7 @@ let arActiveModuleId = null;
 let arActiveMediaIndex = null;
 let arScanTimer = null;
 let arBarcodeDetector = null;
+const officialARMarkerImage = "Recursos/nuevo/ar-ecosistema-digital.webp";
 let capitalMatrixDraftTimer = null;
 const modalFocusStack = [];
 
@@ -599,6 +601,10 @@ function switchView(viewId) {
   if (nextView.matches("main")) {
     window.setTimeout(() => nextView.focus({ preventScroll: true }), 0);
   }
+}
+
+function getActiveViewId() {
+  return document.querySelector(".view.is-active")?.id || "homeView";
 }
 
 function showToast(msg) {
@@ -997,6 +1003,25 @@ function renderAssistantChat() {
     </article>
   `).join("");
   log.scrollTop = log.scrollHeight;
+}
+
+function openChatView(returnView = getActiveViewId()) {
+  chatReturnView = returnView === "chatView" ? "homeView" : returnView;
+  const companionArt = document.getElementById("chatCompanionArt");
+  const summary = document.getElementById("chatContextSummary");
+  const topicTitle = document.getElementById("chatTopicTitle");
+  if (companionArt) {
+    companionArt.innerHTML = selectedCompanion?.art || `<span class="chat-companion-placeholder" aria-hidden="true">?</span>`;
+  }
+  if (summary) {
+    const activity = assistantContext.activity || "recorrido";
+    const topic = assistantContext.topic || courseData[currentModuleId]?.title || "el caso";
+    summary.textContent = `Estás en ${activity}. Te puedo orientar sobre ${topic}, darte pistas progresivas o revisar una respuesta antes de enviarla.`;
+  }
+  if (topicTitle) topicTitle.textContent = assistantContext.topic || courseData[currentModuleId]?.title || "Estoy listo para ayudarte";
+  if (!assistantHistory.length) pushAssistantMessage("assistant", getCompanionMessage(currentModuleId));
+  renderAssistantChat();
+  switchView("chatView");
 }
 
 function resetAssistantChatForModule(moduleId) {
@@ -1828,11 +1853,14 @@ function renderModuleMedia(mediaItems) {
           ? "Continuar actividad guardada"
           : "Realizar actividad"
       : isCompleted ? "Revisado · Volver a abrir" : "Ver contenido completo";
+    const thumbnail = item.imageUrl
+      ? `<span class="media-thumb" aria-hidden="true"><img src="${item.imageUrl}" alt=""></span>`
+      : `<span class="media-icon">${icon}</span>`;
 
     return `
       <button class="media-card ${isCompleted ? 'is-completed' : ''}" type="button" onclick="openResource(${currentModuleId}, ${originalIndex})">
         ${isCompleted ? '<span class="media-complete-badge">✓ Completado</span>' : ''}
-        <span class="media-icon">${icon}</span>
+        ${thumbnail}
         <span class="media-type">${item.type}</span>
         <strong>${item.title}</strong>
         <small>${item.description}</small>
@@ -1899,11 +1927,10 @@ function renderARTargets() {
   if (!targetList) return;
   targetList.innerHTML = arTargets.map((target, index) => `
     <button type="button" class="ar-target-button ${target.id === selectedARTargetId ? "is-selected" : ""}" onclick="selectARTarget('${target.id}')">
-      <span class="ar-marker-mini" id="arMarker-${target.id}" aria-hidden="true"></span>
-      <span><strong>Marcador ${String.fromCharCode(65 + index)}</strong><small>Escanea para revelar la capa</small></span>
+      <span class="ar-layer-badge" aria-hidden="true">C${index + 1}</span>
+      <span><strong>Capa ${String.fromCharCode(65 + index)}</strong><small>Escanea el marcador oficial para revelar la teoría</small></span>
     </button>
   `).join("");
-  arTargets.forEach(target => renderInlineQr(document.getElementById(`arMarker-${target.id}`), getARTargetLink(target.id), 58));
   selectARTarget(selectedARTargetId, false, false);
 }
 
@@ -1917,7 +1944,7 @@ window.selectARTarget = function(targetId, rerenderList = true, reveal = false) 
     instructions.innerHTML = `
       <span class="space-kicker">Marcador preparado</span>
       <strong>Escaneo listo</strong>
-      <p>Apunta la cámara al QR. El nombre del capital se revelará únicamente cuando la capa sea detectada.</p>`;
+      <p>Apunta la cámara al marcador oficial. La capa detectada se abrirá en una vista de lectura independiente.</p>`;
   }
   if (reveal) revealARTarget(target.id, "manual");
 }
@@ -1938,8 +1965,45 @@ function resetARScanState() {
     instructions.innerHTML = `
       <span class="space-kicker">Escaneo pendiente</span>
       <strong>Apunta la cámara a un marcador QR de capital</strong>
-      <p>La información aparecerá sobre la cámara únicamente cuando se detecte una capa.</p>`;
+      <p>La información no se mostrará sobre la cámara: se abrirá como una pantalla de lectura clara.</p>`;
   }
+}
+
+function fillList(targetId, values = []) {
+  const host = document.getElementById(targetId);
+  if (host) host.innerHTML = values.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function populateARTheoryView(target) {
+  const title = document.getElementById("arTheoryTitle");
+  const intro = document.getElementById("arTheoryIntro");
+  const image = document.getElementById("arTheoryImage");
+  const label = document.getElementById("arTheoryLabel");
+  if (title) title.textContent = target.name;
+  if (intro) intro.textContent = target.description;
+  if (image) {
+    image.src = target.image;
+    image.alt = `Representación visual de ${target.name}`;
+  }
+  if (label) {
+    label.textContent = "Capa detectada";
+    label.style.setProperty("--ar-accent", target.color);
+  }
+  document.getElementById("arTheoryDetail").textContent = target.detail || target.description;
+  document.getElementById("arTheoryExample").textContent = target.example || "";
+  document.getElementById("arTheoryChallenge").textContent = target.challenge || "";
+  fillList("arTheoryCharacteristics", target.characteristics || []);
+  fillList("arTheoryFacts", target.facts || []);
+  fillList("arTheoryRisks", target.risks || []);
+  fillList("arTheoryActions", target.actions || []);
+  const resources = document.getElementById("arTheoryResources");
+  if (resources) resources.innerHTML = (target.resources || []).map(item => `<span>${escapeHtml(item)}</span>`).join("");
+}
+
+function openARTheoryView(target, source = "scan") {
+  populateARTheoryView(target);
+  showToast(source === "scan" ? `Capa detectada: ${target.name}.` : `Escaneo guiado: ${target.name}.`);
+  switchView("arTheoryView");
 }
 
 function revealARTarget(targetId, source = "scan") {
@@ -1948,49 +2012,17 @@ function revealARTarget(targetId, source = "scan") {
   selectedARTargetId = target.id;
   detectedARTargetId = target.id;
 
-  const image = document.getElementById("arFloatingImage");
-  const label = document.getElementById("arFloatingLabel");
-  const description = document.getElementById("arFloatingDescription");
-  const challenge = document.getElementById("arChallengeText");
   const floatingCard = document.getElementById("arFloatingCard");
   const question = document.getElementById("arQuestionPanel");
   const insight = document.getElementById("arInsightPanel");
   const instructions = document.getElementById("arScanInstructions");
   const stage = document.querySelector(".ar-camera-stage");
 
-  if (image) {
-    image.src = target.image;
-    image.alt = target.name;
-  }
-  if (label) label.textContent = target.name;
-  if (description) description.textContent = target.description;
-  if (challenge) challenge.textContent = target.challenge;
-  if (floatingCard) {
-    floatingCard.hidden = false;
-    floatingCard.style.setProperty("--ar-accent", target.color);
-    floatingCard.classList.remove("is-detected");
-    void floatingCard.offsetWidth;
-    floatingCard.classList.add("is-detected");
-  }
-  if (question) question.hidden = false;
+  if (floatingCard) floatingCard.hidden = true;
+  if (question) question.hidden = true;
   if (instructions) instructions.hidden = true;
   if (stage) stage.classList.add("is-camera-active", "has-detected-layer");
-  if (insight) {
-    insight.hidden = false;
-    const insightImage = document.getElementById("arInsightImage");
-    if (insightImage) {
-      insightImage.src = target.image;
-      insightImage.alt = `Representación visual de ${target.name}`;
-    }
-    document.getElementById("arInsightTitle").textContent = target.name;
-    document.getElementById("arInsightDetail").textContent = target.detail || target.description;
-    document.getElementById("arInsightCharacteristics").innerHTML = (target.characteristics || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
-    document.getElementById("arInsightExample").textContent = target.example || "";
-    document.getElementById("arInsightFacts").innerHTML = (target.facts || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
-    document.getElementById("arInsightRisks").innerHTML = (target.risks || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
-    document.getElementById("arInsightActions").innerHTML = (target.actions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
-    document.getElementById("arRelatedResources").innerHTML = (target.resources || []).map(item => `<span>${escapeHtml(item)}</span>`).join("");
-  }
+  if (insight) insight.hidden = true;
   setAssistantContext({
     activity: "Realidad aumentada",
     topic: target.name,
@@ -2009,26 +2041,13 @@ function revealARTarget(targetId, source = "scan") {
     unlockBadge("laboratorio-ar");
     if (currentModuleId === arActiveModuleId) renderModuleMedia(courseData[arActiveModuleId].media || []);
   }
-  showToast(source === "scan" ? `Capa detectada: ${target.name}.` : `Escaneo guiado: ${target.name}.`);
+  openARTheoryView(target, source);
 }
 
 function renderARQrCode() {
   const host = document.getElementById("arQrCode");
   if (!host) return;
-  host.innerHTML = "";
-  const link = getPublicARLink();
-  if (window.QRCode) {
-    new window.QRCode(host, {
-      text: link,
-      width: 164,
-      height: 164,
-      colorDark: "#071225",
-      colorLight: "#ffffff",
-      correctLevel: window.QRCode.CorrectLevel.H
-    });
-  } else {
-    host.innerHTML = `<p class="ar-qr-fallback">QR disponible al publicar el proyecto.</p>`;
-  }
+  host.innerHTML = `<img src="${officialARMarkerImage}" alt="Marcador oficial de realidad aumentada del proyecto">`;
 }
 
 function initializeARView(returnView = "homeView") {
@@ -3939,9 +3958,12 @@ function renderProfile() {
       ${badgeDefinitions.map(badge => {
         const unlocked = hasUnlockedBadge(badge.id);
         const saved = certificates.find(item => item.achievementId === badge.id || item.badgeId === badge.id);
+        const badgeVisual = badge.imageUrl
+          ? `<img src="${badge.imageUrl}" alt="">`
+          : `<span>${escapeHtml(badge.icon || "")}</span>`;
         return `
           <article class="badge-card ${unlocked ? 'is-unlocked' : 'is-locked'}">
-            <div class="badge-medal" aria-hidden="true">${badge.icon}</div>
+            <div class="badge-medal" aria-hidden="true">${badgeVisual}</div>
             <div>
               <span>${unlocked ? `Desbloqueada${saved?.date ? ` · ${saved.date}` : ''}` : 'Bloqueada'}</span>
               <h3>${badge.name}</h3>
@@ -4244,6 +4266,15 @@ document.getElementById("btnBackFromTeam").onclick = () => { renderMap(); switch
 document.getElementById("btnGoProfile").onclick = () => { renderProfile(); switchView("profileView"); };
 document.getElementById("btnBackFromProfile").onclick = () => { renderMap(); switchView("homeView"); };
 document.getElementById("btnSyncProgress").onclick = () => syncProgressNow();
+document.getElementById("btnOpenChat").onclick = () => openChatView(getActiveViewId());
+document.getElementById("btnOpenModuleChat").onclick = () => openChatView("moduleView");
+document.getElementById("btnBackFromChat").onclick = () => {
+  if (chatReturnView === "moduleView" && currentUser) {
+    openModule(currentModuleId);
+    return;
+  }
+  switchView(currentUser ? chatReturnView || "homeView" : "loginView");
+};
 document.getElementById("assistantForm").onsubmit = (event) => {
   event.preventDefault();
   const input = document.getElementById("assistantQuestion");
@@ -4266,6 +4297,17 @@ document.getElementById("btnStartARCamera").onclick = () => startARCamera();
 document.getElementById("btnSimulateARScan").onclick = () => revealARTarget(selectedARTargetId, "manual");
 document.getElementById("btnStopARCamera").onclick = () => stopARCamera();
 document.getElementById("btnARContinueActivity").onclick = () => {
+  stopARCamera();
+  if (arReturnView === "moduleView" && currentUser) {
+    openModule(2);
+    return;
+  }
+  switchView(currentUser ? "homeView" : "loginView");
+};
+document.getElementById("btnBackToARScan").onclick = () => {
+  switchView("arView");
+};
+document.getElementById("btnARTheoryContinue").onclick = () => {
   stopARCamera();
   if (arReturnView === "moduleView" && currentUser) {
     openModule(2);
@@ -4327,6 +4369,14 @@ function getAccessibilityGuide(viewId) {
     arView: {
       src: "Recursos/nuevo/guia-realidad-aumentada.wav",
       name: "laboratorio de realidad aumentada"
+    },
+    arTheoryView: {
+      src: "Recursos/nuevo/guia-realidad-aumentada.wav",
+      name: "contenido de realidad aumentada"
+    },
+    chatView: {
+      src: "Recursos/nuevo/guia-inicio-recorrido.wav",
+      name: "chat de ayuda"
     }
   };
 

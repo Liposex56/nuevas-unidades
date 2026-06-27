@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Insignia Arquitecto SECI</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ee2c2"/><stop offset="1" stop-color="#8ea8ff"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-opacity=".35"/></filter>
+  </defs>
+  <circle cx="256" cy="256" r="222" fill="#07110f"/>
+  <circle cx="256" cy="256" r="198" fill="url(#bg)" filter="url(#shadow)"/>
+  <circle cx="256" cy="256" r="158" fill="#10221f"/>
+  <path d="M170 176c52-46 128-46 180 0M350 336c-52 46-128 46-180 0" fill="none" stroke="#f3c75f" stroke-width="22" stroke-linecap="round"/>
+  <path d="M350 176h-54m54 0v54M170 336h54m-54 0v-54" fill="none" stroke="#f3c75f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="248" text-anchor="middle" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="68" font-weight="950">SECI</text>
+  <text x="256" y="306" text-anchor="middle" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="28" font-weight="900">ARQUITECTO</text>
+</svg>

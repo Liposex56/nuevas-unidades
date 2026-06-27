@@ -97,6 +97,7 @@
         <span class="student-chip" id="headerStudentName">Estudiante</span>
         <button class="ghost-button" id="btnGoTeam"><span class="team-button-full">Equipo de desarrollo</span><span class="team-button-short">Equipo</span></button>
         <button class="ghost-button" id="btnGoProfile">Mi Perfil</button>
+        <button class="ghost-button" id="btnOpenChat">Chat de ayuda</button>
         <button class="ghost-button" id="logoutBtn">Cerrar sesión</button>
       </div>
     </div>
@@ -269,20 +270,10 @@
 
     <aside class="module-side-companion" id="moduleSideCompanion">
       <div class="side-companion-art" id="moduleCompanionArt"></div>
-      <p class="companion-speech" id="companionSpeech"></p>
-      <div class="assistant-panel" aria-label="Asistente interactivo de ayuda">
-        <div class="assistant-chat-log" id="assistantChatLog" aria-live="polite"></div>
-        <div class="assistant-quick-actions">
-          <button type="button" onclick="askCompanionAssistant('hint')">¿Cómo resuelvo?</button>
-          <button type="button" onclick="askCompanionAssistant('explain')">Explícame</button>
-          <button type="button" onclick="askCompanionAssistant('example')">Ejemplo</button>
-          <button type="button" onclick="askCompanionAssistant('review')">Revisa mi respuesta</button>
-        </div>
-        <form id="assistantForm" class="assistant-form">
-          <label class="sr-only" for="assistantQuestion">Pregunta al acompañante</label>
-          <input id="assistantQuestion" type="text" placeholder="Pregunta algo..." autocomplete="off">
-          <button type="submit" aria-label="Enviar pregunta">Enviar</button>
-        </form>
+      <div class="side-companion-copy">
+        <span class="space-kicker">Acompañante activo</span>
+        <p class="companion-speech" id="companionSpeech"></p>
+        <button type="button" class="ghost-button companion-chat-button" id="btnOpenModuleChat">Abrir chat de ayuda</button>
       </div>
     </aside>
     
@@ -320,6 +311,40 @@
     </article>
   </main>
 
+  <!-- VISTA DE CHAT DE AYUDA -->
+  <main id="chatView" class="view app-content chat-page" tabindex="-1">
+    <section class="chat-shell" aria-labelledby="chatViewTitle">
+      <aside class="chat-context-card">
+        <button type="button" class="space-back-button" id="btnBackFromChat">← Volver</button>
+        <div class="chat-companion-orbit" id="chatCompanionArt"></div>
+        <span class="space-kicker">Asistente académico</span>
+        <h1 id="chatViewTitle">Chat de ayuda</h1>
+        <p id="chatContextSummary">Pregunta sobre la teoría, las actividades, el caso o la realidad aumentada.</p>
+      </aside>
+      <section class="chat-workspace" aria-label="Conversación con el acompañante">
+        <div class="chat-workspace-header">
+          <div>
+            <span class="space-kicker">Apoyo contextual</span>
+            <h2 id="chatTopicTitle">Estoy listo para ayudarte</h2>
+          </div>
+          <span class="chat-status-pill">Respuesta guiada</span>
+        </div>
+        <div class="assistant-chat-log chat-page-log" id="assistantChatLog" aria-live="polite"></div>
+        <div class="assistant-quick-actions chat-page-actions">
+          <button type="button" onclick="askCompanionAssistant('hint')">¿Cómo resuelvo?</button>
+          <button type="button" onclick="askCompanionAssistant('explain')">Explícame</button>
+          <button type="button" onclick="askCompanionAssistant('example')">Ejemplo</button>
+          <button type="button" onclick="askCompanionAssistant('review')">Revisa mi respuesta</button>
+        </div>
+        <form id="assistantForm" class="assistant-form chat-page-form">
+          <label class="sr-only" for="assistantQuestion">Pregunta al acompañante</label>
+          <input id="assistantQuestion" type="text" placeholder="Escribe tu pregunta sobre la unidad o el caso..." autocomplete="off">
+          <button type="submit" aria-label="Enviar pregunta">Enviar</button>
+        </form>
+      </section>
+    </section>
+  </main>
+
   <!-- VISTA PÚBLICA DE REALIDAD AUMENTADA -->
   <main id="arView" class="view ar-experience-view" tabindex="-1">
     <header class="ar-topbar">
@@ -336,13 +361,13 @@
         <video id="arCamera" autoplay muted playsinline></video>
         <div class="ar-camera-fallback" id="arCameraFallback">
           <img src="Recursos/nuevo/ar-ecosistema-digital.webp" alt="">
-          <p>Activa la cámara para superponer las capas de conocimiento sobre tu entorno.</p>
+          <p>Activa la cámara y apunta al marcador oficial. Cuando el escaneo sea correcto, la teoría se abrirá en una vista aparte.</p>
         </div>
         <div class="ar-reticle" aria-hidden="true"><span></span></div>
         <div class="ar-scan-instructions" id="arScanInstructions">
           <span class="space-kicker">Escaneo pendiente</span>
           <strong>Apunta la cámara a un marcador QR de capital</strong>
-          <p>La información aparecerá sobre la cámara únicamente cuando se detecte una capa.</p>
+          <p>La información no se mostrará sobre la cámara: se abrirá como una pantalla de lectura clara.</p>
         </div>
         <article class="ar-floating-card" id="arFloatingCard" hidden>
           <img id="arFloatingImage" src="Recursos/nuevo/ar-capital-humano.webp" alt="">
@@ -362,7 +387,7 @@
         <div>
           <span class="space-kicker">Marcadores de escaneo</span>
           <h2>Escanea una capa</h2>
-          <p>Usa la cámara del celular para leer un marcador. El escaneo guiado es una alternativa de accesibilidad o compatibilidad cuando el navegador no detecta QR desde video.</p>
+          <p>Usa el marcador oficial del proyecto. El escaneo guiado mantiene la misma experiencia cuando el navegador no permite leer QR desde video.</p>
         </div>
         <div class="ar-target-list" id="arTargetList"></div>
         <div class="ar-question-panel" id="arQuestionPanel" hidden>
@@ -402,14 +427,63 @@
           <button type="button" class="start-button" id="btnARContinueActivity">Continuar con la actividad</button>
         </div>
         <div class="ar-qr-panel" id="arQrPanel">
-          <div id="arQrCode" aria-label="Código QR para abrir esta experiencia en un celular"></div>
+          <div id="arQrCode" aria-label="Marcador oficial de realidad aumentada"></div>
           <div>
-            <strong>Continúa en tu celular</strong>
-            <p>Escanea el código y abre la cámara desde el navegador móvil.</p>
+            <strong>Marcador oficial AR</strong>
+            <p>Usa este marcador para activar la vista de teoría aumentada del caso.</p>
             <button type="button" class="ghost-button" id="btnCopyARLink">Copiar enlace</button>
           </div>
         </div>
       </aside>
+    </section>
+  </main>
+
+  <!-- VISTA DE TEORÍA DESPUÉS DEL ESCANEO AR -->
+  <main id="arTheoryView" class="view app-content ar-theory-view" tabindex="-1">
+    <button type="button" class="space-back-button" id="btnBackToARScan">← Volver al escaneo</button>
+    <section class="ar-theory-shell" aria-labelledby="arTheoryTitle">
+      <header class="ar-theory-hero">
+        <div>
+          <span class="space-kicker">Resultado del escaneo</span>
+          <h1 id="arTheoryTitle">Capital organizacional</h1>
+          <p id="arTheoryIntro">La capa detectada se presenta aquí con teoría, ejemplo y acciones aplicadas al caso.</p>
+        </div>
+        <img id="arTheoryImage" src="Recursos/nuevo/ar-capital-humano.webp" alt="">
+      </header>
+      <section class="ar-theory-grid">
+        <article class="ar-theory-main">
+          <span class="ar-theory-chip" id="arTheoryLabel">Capa detectada</span>
+          <p id="arTheoryDetail"></p>
+          <div class="ar-info-block">
+            <strong>Características principales</strong>
+            <ul id="arTheoryCharacteristics"></ul>
+          </div>
+          <div class="ar-info-block">
+            <strong>Ejemplo aplicado a Universidad Horizonte</strong>
+            <p id="arTheoryExample"></p>
+          </div>
+        </article>
+        <aside class="ar-theory-aside">
+          <div>
+            <strong>Pregunta de observación</strong>
+            <p id="arTheoryChallenge"></p>
+          </div>
+          <div>
+            <strong>Datos importantes</strong>
+            <ul id="arTheoryFacts"></ul>
+          </div>
+          <div>
+            <strong>Riesgos relacionados</strong>
+            <ul id="arTheoryRisks"></ul>
+          </div>
+          <div>
+            <strong>Acciones sugeridas</strong>
+            <ul id="arTheoryActions"></ul>
+          </div>
+          <div class="ar-related-resources" id="arTheoryResources"></div>
+          <button type="button" class="start-button" id="btnARTheoryContinue">Continuar con la actividad</button>
+        </aside>
+      </section>
     </section>
   </main>
 
