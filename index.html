@@ -361,13 +361,13 @@
         <video id="arCamera" autoplay muted playsinline></video>
         <div class="ar-camera-fallback" id="arCameraFallback">
           <img src="Recursos/nuevo/ar-ecosistema-digital.webp" alt="">
-          <p>Activa la cámara y apunta al marcador oficial. Cuando el escaneo sea correcto, la teoría se abrirá en una vista aparte.</p>
+          <p>Activa la cámara y apunta a uno de los QR reales. Cuando el escaneo sea correcto, la teoría se abrirá en una vista aparte.</p>
         </div>
         <div class="ar-reticle" aria-hidden="true"><span></span></div>
         <div class="ar-scan-instructions" id="arScanInstructions">
           <span class="space-kicker">Escaneo pendiente</span>
-          <strong>Apunta la cámara a un marcador QR de capital</strong>
-          <p>La información no se mostrará sobre la cámara: se abrirá como una pantalla de lectura clara.</p>
+          <strong>Escanea un QR real de capital</strong>
+          <p>Selecciona una capa y escanea su código. La información se abrirá en una vista nueva y clara.</p>
         </div>
         <article class="ar-floating-card" id="arFloatingCard" hidden>
           <img id="arFloatingImage" src="Recursos/nuevo/ar-capital-humano.webp" alt="">
@@ -387,7 +387,7 @@
         <div>
           <span class="space-kicker">Marcadores de escaneo</span>
           <h2>Escanea una capa</h2>
-          <p>Usa el marcador oficial del proyecto. El escaneo guiado mantiene la misma experiencia cuando el navegador no permite leer QR desde video.</p>
+          <p>Cada capa tiene un QR real. Puedes escanearlo con cámara o usar el escaneo guiado si el navegador no permite leer códigos desde video.</p>
         </div>
         <div class="ar-target-list" id="arTargetList"></div>
         <div class="ar-question-panel" id="arQuestionPanel" hidden>
@@ -427,10 +427,10 @@
           <button type="button" class="start-button" id="btnARContinueActivity">Continuar con la actividad</button>
         </div>
         <div class="ar-qr-panel" id="arQrPanel">
-          <div id="arQrCode" aria-label="Marcador oficial de realidad aumentada"></div>
+          <div id="arQrCode" aria-label="Código QR real de realidad aumentada"></div>
           <div>
-            <strong>Marcador oficial AR</strong>
-            <p>Usa este marcador para activar la vista de teoría aumentada del caso.</p>
+            <strong>QR real escaneable</strong>
+            <p>Este código abre directamente la teoría de la capa seleccionada en una vista independiente.</p>
             <button type="button" class="ghost-button" id="btnCopyARLink">Copiar enlace</button>
           </div>
         </div>

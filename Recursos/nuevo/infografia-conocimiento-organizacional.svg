@@ -23,7 +23,8 @@
   </g>
   <text x="70" y="84" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">GESTIÓN DEL CONOCIMIENTO</text>
   <text x="70" y="135" fill="#ffffff" font-family="Inter,Segoe UI,sans-serif" font-size="50" font-weight="900">Del saber personal a la memoria organizacional</text>
-  <text x="70" y="182" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="24">Una organización aprende cuando transforma experiencia dispersa en conocimiento compartido, recuperable y útil.</text>
+  <text x="70" y="176" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="23">Una organización aprende cuando transforma experiencia dispersa</text>
+  <text x="70" y="208" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="23">en conocimiento compartido, recuperable y útil.</text>
 
   <g transform="translate(80 245)">
     <rect width="305" height="315" rx="28" fill="#102a25" stroke="#5ee2c2" stroke-width="3"/>

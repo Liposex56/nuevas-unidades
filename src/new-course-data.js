@@ -303,7 +303,11 @@ window.KNOWLEDGE_REINFORCEMENT_DATA = {
       { id: "u1-c", text: "Docentes jóvenes observan clases de una experta y luego conversan sobre sus decisiones pedagógicas.", answer: "socializacion" },
       { id: "u1-d", text: "Un equipo entrevista a investigadores senior y transforma sus criterios en una guía de buenas prácticas.", answer: "exteriorizacion" },
       { id: "u1-e", text: "La facultad cruza reportes, artículos y datos de uso para diseñar un nuevo tablero institucional.", answer: "combinacion" },
-      { id: "u1-f", text: "Después de estudiar una guía, un equipo la aplica varias semanas hasta que la incorpora a su forma de trabajo.", answer: "interiorizacion" }
+      { id: "u1-f", text: "Después de estudiar una guía, un equipo la aplica varias semanas hasta que la incorpora a su forma de trabajo.", answer: "interiorizacion" },
+      { id: "u1-g", text: "Una coordinadora sabe detectar tensiones en reuniones híbridas por gestos mínimos y ajusta la mediación en tiempo real.", answer: "tacito" },
+      { id: "u1-h", text: "El equipo fusiona rúbricas, datos de permanencia y actas de comité para crear una matriz de seguimiento académico.", answer: "combinacion" },
+      { id: "u1-i", text: "Durante una mentoría, un docente novel aprende a formular preguntas observando cómo la experta conduce una tutoría.", answer: "socializacion" },
+      { id: "u1-j", text: "Una práctica de retroalimentación queda convertida en plantilla, lista de verificación y ejemplo comentado para otros cursos.", answer: "exteriorizacion" }
     ]
   },
   2: {
@@ -395,6 +399,13 @@ window.KNOWLEDGE_REVIEW_DATA = {
         correct: 1,
         hint: "El documento explícito se volvió habilidad práctica.",
         feedback: "La interiorización ocurre cuando lo explícito se incorpora a la práctica."
+      },
+      {
+        prompt: "Dos grupos investigan el mismo problema porque no conocen estudios previos guardados en carpetas separadas. ¿Qué decisión previene mejor la duplicación?",
+        options: ["Crear un repositorio con metadatos, buscador y responsables de actualización", "Pedir que cada grupo trabaje aislado", "Eliminar los proyectos antiguos sin revisarlos", "Comprar licencias nuevas sin clasificar información"],
+        correct: 0,
+        hint: "El problema central es recuperar y reutilizar capital intelectual.",
+        feedback: "Un repositorio con metadatos convierte información dispersa en memoria institucional accesible."
       }
     ]
   },

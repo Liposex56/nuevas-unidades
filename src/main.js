@@ -1927,10 +1927,11 @@ function renderARTargets() {
   if (!targetList) return;
   targetList.innerHTML = arTargets.map((target, index) => `
     <button type="button" class="ar-target-button ${target.id === selectedARTargetId ? "is-selected" : ""}" onclick="selectARTarget('${target.id}')">
-      <span class="ar-layer-badge" aria-hidden="true">C${index + 1}</span>
-      <span><strong>Capa ${String.fromCharCode(65 + index)}</strong><small>Escanea el marcador oficial para revelar la teoría</small></span>
+      <span class="ar-marker-mini" id="arMarker-${target.id}" aria-label="QR real para abrir la capa ${String.fromCharCode(65 + index)}"></span>
+      <span><strong>Capa ${String.fromCharCode(65 + index)}</strong><small>QR real escaneable · selecciona para ampliar</small></span>
     </button>
   `).join("");
+  arTargets.forEach(target => renderInlineQr(document.getElementById(`arMarker-${target.id}`), getARTargetLink(target.id), 72));
   selectARTarget(selectedARTargetId, false, false);
 }
 
@@ -1942,10 +1943,11 @@ window.selectARTarget = function(targetId, rerenderList = true, reveal = false) 
   const instructions = document.getElementById("arScanInstructions");
   if (instructions && !detectedARTargetId) {
     instructions.innerHTML = `
-      <span class="space-kicker">Marcador preparado</span>
-      <strong>Escaneo listo</strong>
-      <p>Apunta la cámara al marcador oficial. La capa detectada se abrirá en una vista de lectura independiente.</p>`;
+      <span class="space-kicker">QR preparado</span>
+      <strong>Código real listo para escanear</strong>
+      <p>Escanea el QR de la capa seleccionada. La teoría se abrirá en una vista nueva, sin superponerse a la cámara.</p>`;
   }
+  renderARQrCode();
   if (reveal) revealARTarget(target.id, "manual");
 }
 
@@ -1964,8 +1966,8 @@ function resetARScanState() {
     instructions.hidden = false;
     instructions.innerHTML = `
       <span class="space-kicker">Escaneo pendiente</span>
-      <strong>Apunta la cámara a un marcador QR de capital</strong>
-      <p>La información no se mostrará sobre la cámara: se abrirá como una pantalla de lectura clara.</p>`;
+      <strong>Escanea un QR real de capital</strong>
+      <p>Selecciona una capa y escanea su código. La teoría se abrirá en una vista nueva y ordenada.</p>`;
   }
 }
 
@@ -2002,7 +2004,10 @@ function populateARTheoryView(target) {
 
 function openARTheoryView(target, source = "scan") {
   populateARTheoryView(target);
-  showToast(source === "scan" ? `Capa detectada: ${target.name}.` : `Escaneo guiado: ${target.name}.`);
+  const liveRegion = document.getElementById("liveRegion");
+  if (liveRegion) liveRegion.textContent = source === "scan"
+    ? `Capa detectada: ${target.name}. Se abrió la teoría en una vista nueva.`
+    : `Escaneo guiado: ${target.name}. Se abrió la teoría en una vista nueva.`;
   switchView("arTheoryView");
 }
 
@@ -2038,7 +2043,7 @@ function revealARTarget(targetId, source = "scan") {
   if (arActiveModuleId && arActiveMediaIndex !== null) {
     saveViewedResource(arActiveModuleId, arActiveMediaIndex);
     markActivityComplete(arActiveModuleId, "ar");
-    unlockBadge("laboratorio-ar");
+    unlockBadge("laboratorio-ar", true);
     if (currentModuleId === arActiveModuleId) renderModuleMedia(courseData[arActiveModuleId].media || []);
   }
   openARTheoryView(target, source);
@@ -2047,7 +2052,9 @@ function revealARTarget(targetId, source = "scan") {
 function renderARQrCode() {
   const host = document.getElementById("arQrCode");
   if (!host) return;
-  host.innerHTML = `<img src="${officialARMarkerImage}" alt="Marcador oficial de realidad aumentada del proyecto">`;
+  const link = getARTargetLink(selectedARTargetId);
+  renderInlineQr(host, link, 188);
+  host.dataset.target = selectedARTargetId;
 }
 
 function initializeARView(returnView = "homeView") {
@@ -2941,16 +2948,16 @@ function renderInvestigationReinforcement(activity, practiceMode = false) {
 window.collectInvestigationEvidence = function(evidenceId) {
   const activity = activeInvestigationActivity;
   const evidence = activity?.locations?.find(item => item.id === evidenceId);
-  const feedback = document.getElementById("reinforcementFeedback");
   if (!activity || !evidence) return;
 
-  const current = new Set(activityProgressByModule[currentModuleId]?.investigationEvidence || []);
-  current.add(evidenceId);
-  activityProgressByModule[currentModuleId] = {
-    ...(activityProgressByModule[currentModuleId] || {}),
-    investigationEvidence: [...current]
-  };
-  saveUserProgress();
+  const collected = new Set(activityProgressByModule[currentModuleId]?.investigationEvidence || []);
+  const isCollected = collected.has(evidenceId);
+  const options = [...new Set(activity.locations.map(item => item.capital))];
+  const optionButtons = options.map(option => `
+    <button type="button" class="diagnosis-option" onclick="submitInvestigationDiagnosis('${evidenceId}', '${escapeHtml(option)}')">
+      ${escapeHtml(option)}
+    </button>
+  `).join("");
 
   setAssistantContext({
     activity: "Investigación del problema",
@@ -2961,28 +2968,87 @@ window.collectInvestigationEvidence = function(evidenceId) {
     hint: "Explica qué capital está afectado y qué acción permitiría conservar o movilizar ese conocimiento.",
     feedback: evidence.explanation,
     isCorrect: null,
+    attempts: collected.size
+  });
+
+  openContentModal(
+    `Diagnóstico: ${evidence.title}`,
+    `
+      <section class="diagnosis-lab">
+        <div class="diagnosis-evidence-card">
+          <span class="evidence-index">${escapeHtml(evidence.icon)}</span>
+          <div>
+            <span class="activity-kicker">${escapeHtml(evidence.place)}</span>
+            <h3>${escapeHtml(evidence.signal)}</h3>
+            <p>${escapeHtml(evidence.explanation)}</p>
+          </div>
+        </div>
+        <div class="diagnosis-question-card">
+          <h3>¿Qué capital o eje institucional está principalmente afectado?</h3>
+          <p>Elige con criterio: algunas evidencias se parecen, pero la clave está en identificar dónde se produce la pérdida de valor.</p>
+          <div class="diagnosis-options">
+            ${optionButtons}
+          </div>
+          <p class="diagnosis-feedback ${isCollected ? "is-success" : ""}" id="diagnosisFeedback" role="status">
+            ${isCollected ? `Esta evidencia ya está guardada como ${escapeHtml(evidence.capital)}.` : "Selecciona una opción para agregar la evidencia al tablero."}
+          </p>
+        </div>
+      </section>
+    `,
+    [],
+    false
+  );
+}
+
+window.submitInvestigationDiagnosis = function(evidenceId, selectedCapital) {
+  const activity = activeInvestigationActivity;
+  const evidence = activity?.locations?.find(item => item.id === evidenceId);
+  const feedback = document.getElementById("diagnosisFeedback");
+  if (!activity || !evidence || !feedback) return;
+
+  if (selectedCapital !== evidence.capital) {
+    feedback.className = "diagnosis-feedback is-warning";
+    feedback.textContent = `Aún no. Esa opción toca el caso, pero esta evidencia apunta mejor a ${evidence.capital}. Revisa la señal: ${evidence.signal}.`;
+    return;
+  }
+
+  const current = new Set(activityProgressByModule[currentModuleId]?.investigationEvidence || []);
+  current.add(evidenceId);
+  activityProgressByModule[currentModuleId] = {
+    ...(activityProgressByModule[currentModuleId] || {}),
+    investigationEvidence: [...current]
+  };
+  saveUserProgress();
+  feedback.className = "diagnosis-feedback is-success";
+  feedback.innerHTML = `<strong>Correcto:</strong> ${escapeHtml(evidence.capital)}. Evidencia guardada en el tablero.`;
+
+  setAssistantContext({
+    activity: "Diagnóstico de evidencia",
+    topic: evidence.capital,
+    question: evidence.title,
+    selectedAnswer: selectedCapital,
+    expectedAnswer: evidence.capital,
+    hint: "Conecta la señal de la evidencia con el capital o eje más afectado.",
+    feedback: evidence.explanation,
+    isCorrect: true,
     attempts: current.size
   });
 
-  if (feedback) {
-    feedback.className = "reinforcement-feedback is-success";
-    feedback.innerHTML = `<strong>${escapeHtml(evidence.capital)}:</strong> ${escapeHtml(evidence.explanation)}`;
-  }
-
-  if (current.size === activity.locations.length) {
-    activityProgressByModule[currentModuleId].investigationEvidence = [...current];
-    markActivityComplete(currentModuleId, "memory");
-    launchActivityCelebration("reinforcementContainer");
-    const speech = document.getElementById("companionSpeech");
-    if (speech) speech.textContent = `Muy bien, ${getStudentName()}. Ya reuniste las evidencias centrales de Universidad Horizonte.`;
-  } else {
+  window.setTimeout(() => {
+    closeTheoryModal();
     renderInvestigationReinforcement(activity);
-    const nextFeedback = document.getElementById("reinforcementFeedback");
-    if (nextFeedback) {
-      nextFeedback.className = "reinforcement-feedback is-success";
-      nextFeedback.innerHTML = `<strong>${escapeHtml(evidence.capital)}:</strong> ${escapeHtml(evidence.explanation)}`;
+    const boardFeedback = document.getElementById("reinforcementFeedback");
+    if (boardFeedback) {
+      boardFeedback.className = "reinforcement-feedback is-success";
+      boardFeedback.innerHTML = `<strong>${escapeHtml(evidence.capital)}:</strong> ${escapeHtml(evidence.explanation)}`;
     }
-  }
+    if (current.size === activity.locations.length) {
+      markActivityComplete(currentModuleId, "memory");
+      launchActivityCelebration("reinforcementContainer");
+      const speech = document.getElementById("companionSpeech");
+      if (speech) speech.textContent = `Muy bien, ${getStudentName()}. Ya reuniste y diagnosticaste las evidencias centrales de Universidad Horizonte.`;
+    }
+  }, 750);
 }
 
 function renderReinforcement(activity, practiceMode = false) {
@@ -3337,7 +3403,11 @@ function renderInterventionRouteReview(activity, practiceMode = false, providedO
           ${interventionRouteOrder.map((stepId, index) => {
             const step = activity.steps.find(item => item.id === stepId);
             return `
-              <article class="route-step ${isSolved ? "is-checked" : ""}" data-route-step="${step.id}">
+              <article class="route-step ${isSolved ? "is-checked" : ""}" data-route-step="${step.id}"
+                draggable="${isSolved ? "false" : "true"}"
+                ondragstart="startRouteDrag(event, ${index})"
+                ondragover="event.preventDefault()"
+                ondrop="dropRouteStep(event, ${index})">
                 <span>${index + 1}</span>
                 <div><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.detail)}</p></div>
                 <div class="route-step-actions">
@@ -3382,6 +3452,23 @@ window.moveRouteStep = function(index, direction) {
   const assignments = getRouteSelections();
   const nextOrder = [...interventionRouteOrder];
   [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
+  renderInterventionRouteReview(activeRouteActivity, true, nextOrder, assignments);
+}
+
+window.startRouteDrag = function(event, index) {
+  event.dataTransfer.setData("text/plain", String(index));
+  event.dataTransfer.effectAllowed = "move";
+}
+
+window.dropRouteStep = function(event, targetIndex) {
+  event.preventDefault();
+  if (!activeRouteActivity) return;
+  const fromIndex = Number(event.dataTransfer.getData("text/plain"));
+  if (!Number.isInteger(fromIndex) || fromIndex === targetIndex) return;
+  const assignments = getRouteSelections();
+  const nextOrder = [...interventionRouteOrder];
+  const [moved] = nextOrder.splice(fromIndex, 1);
+  nextOrder.splice(targetIndex, 0, moved);
   renderInterventionRouteReview(activeRouteActivity, true, nextOrder, assignments);
 }
 
@@ -3903,7 +3990,7 @@ function getBadgeDefinition(badgeId) {
   return badgeDefinitions.find(badge => badge.id === badgeId);
 }
 
-function unlockBadge(badgeId) {
+function unlockBadge(badgeId, silent = false) {
   const badge = getBadgeDefinition(badgeId);
   if (!badge) return;
   if (!certificates.find(item => item.achievementId === badgeId || item.badgeId === badgeId)) {
@@ -3917,7 +4004,7 @@ function unlockBadge(badgeId) {
       date: new Date().toLocaleDateString("es-CO")
     });
     saveUserProgress();
-    showToast(`Insignia desbloqueada: ${badge.name}.`);
+    if (!silent) showToast(`Insignia desbloqueada: ${badge.name}.`);
   }
 }
 

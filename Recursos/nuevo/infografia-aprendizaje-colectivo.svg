@@ -8,7 +8,8 @@
   <rect width="1200" height="760" rx="36" fill="url(#bg)"/>
   <text x="70" y="82" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">APRENDIZAJE ORGANIZACIONAL</text>
   <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Personas que aprenden juntas</text>
-  <text x="70" y="184" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="24">El aprendizaje crece cuando la experiencia individual se convierte en diálogo, práctica y mejora colectiva.</text>
+  <text x="70" y="176" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="23">El aprendizaje crece cuando la experiencia individual se convierte</text>
+  <text x="70" y="208" fill="#cfe8e0" font-family="Inter,Segoe UI,sans-serif" font-size="23">en diálogo, práctica y mejora colectiva.</text>
 
   <g transform="translate(82 242)" filter="url(#shadow)">
     <circle cx="205" cy="190" r="150" fill="#102a25" stroke="#5ee2c2" stroke-width="4"/>
@@ -33,9 +34,9 @@
 
   <g transform="translate(105 642)" font-family="Inter,Segoe UI,sans-serif" font-size="23" font-weight="850">
     <text fill="#fff">Indicador de avance:</text>
-    <text x="245" fill="#5ee2c2">más reutilización</text>
-    <text x="465" fill="#f3c75f">menos duplicación</text>
-    <text x="700" fill="#8ea8ff">mejor colaboración</text>
-    <text x="948" fill="#86d69f">decisiones con evidencia</text>
+    <text x="260" fill="#5ee2c2">más reutilización</text>
+    <text x="480" fill="#f3c75f">menos duplicación</text>
+    <text x="720" fill="#8ea8ff">mejor colaboración</text>
+    <text x="940" fill="#86d69f" font-size="20">decisiones con evidencia</text>
   </g>
 </svg>

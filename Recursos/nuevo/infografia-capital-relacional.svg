@@ -11,13 +11,15 @@
   </g>
   <text x="70" y="82" fill="#f3c75f" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">CAPITAL RELACIONAL</text>
   <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Confianza que multiplica conocimiento</text>
-  <text x="70" y="184" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="24">No es una lista de contactos: son relaciones que permiten intercambio, legitimidad y proyectos compartidos.</text>
+  <text x="70" y="176" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="23">No es una lista de contactos: son relaciones que permiten</text>
+  <text x="70" y="208" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="23">intercambio, legitimidad y proyectos compartidos.</text>
   <g font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="900" fill="#07110f" text-anchor="middle">
     <text x="230" y="428">Estudiantes</text><text x="420" y="288">Egresados</text><text x="610" y="448">Aliados</text><text x="790" y="258">Docentes</text><text x="980" y="428">Comunidad</text>
   </g>
   <g transform="translate(130 560)" font-family="Inter,Segoe UI,sans-serif">
     <rect width="940" height="120" rx="24" fill="#10221f" stroke="#f3c75f"/>
     <text x="34" y="46" fill="#f3c75f" font-size="27" font-weight="900">Se fortalece cuando hay:</text>
-    <text x="34" y="86" fill="#f3ead0" font-size="22">retroalimentación visible · acuerdos claros · devolución de resultados · proyectos colaborativos · aprendizaje mutuo</text>
+    <text x="34" y="82" fill="#f3ead0" font-size="21">retroalimentación visible · acuerdos claros · devolución de resultados</text>
+    <text x="34" y="112" fill="#f3ead0" font-size="21">proyectos colaborativos · aprendizaje mutuo</text>
   </g>
 </svg>

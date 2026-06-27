@@ -2918,3 +2918,190 @@ button.team-profile-photo { cursor: zoom-in; }
     width: calc(100% - 28px) !important;
   }
 }
+
+/* Ajustes de AR funcional, QR reales y actividades mejoradas */
+.ar-target-button {
+  grid-template-columns: 86px minmax(0, 1fr);
+  min-height: 96px;
+  padding: 12px;
+}
+
+.ar-marker-mini {
+  width: 76px;
+  height: 76px;
+  padding: 6px;
+  border: 1px solid rgba(7,17,15,0.16);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.22);
+}
+
+.ar-marker-mini img,
+.ar-marker-mini canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+#arQrCode {
+  width: 188px;
+  height: 188px;
+  padding: 12px;
+  border: 1px solid rgba(243,199,95,0.5);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+}
+
+#arQrCode img,
+#arQrCode canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+.ar-qr-panel {
+  grid-template-columns: 188px minmax(0, 1fr);
+  order: -1;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 18px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ar-theory-view {
+  padding-top: clamp(20px, 3vw, 42px);
+}
+
+.ar-theory-hero {
+  min-height: 330px;
+  border-color: rgba(94,226,194,0.28);
+  background:
+    radial-gradient(circle at 80% 35%, rgba(94,226,194,0.12), transparent 34%),
+    linear-gradient(135deg, rgba(11,34,30,0.98), rgba(10,21,38,0.96));
+}
+
+.ar-theory-hero img {
+  aspect-ratio: 1;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.ar-theory-main,
+.ar-theory-aside {
+  box-shadow: 0 20px 44px rgba(0,0,0,0.26);
+}
+
+.diagnosis-lab {
+  display: grid;
+  gap: 18px;
+}
+
+.diagnosis-evidence-card,
+.diagnosis-question-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(94,226,194,0.22);
+  border-radius: var(--radius);
+  background: rgba(11,28,26,0.92);
+}
+
+.diagnosis-evidence-card {
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: start;
+}
+
+.diagnosis-evidence-card .evidence-index {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 18px;
+  color: #07110f;
+  background: linear-gradient(135deg, var(--teal), var(--amber));
+  font-weight: 950;
+}
+
+.diagnosis-evidence-card h3,
+.diagnosis-question-card h3 {
+  color: var(--text);
+}
+
+.diagnosis-evidence-card p,
+.diagnosis-question-card p {
+  color: #d9ebe6;
+  line-height: 1.6;
+}
+
+.diagnosis-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.diagnosis-option {
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid rgba(94,226,194,0.22);
+  border-radius: 12px;
+  color: var(--text);
+  background: rgba(255,255,255,0.045);
+  font-weight: 900;
+}
+
+.diagnosis-option:hover,
+.diagnosis-option:focus-visible {
+  border-color: var(--amber);
+  color: #07110f;
+  background: var(--amber);
+}
+
+.diagnosis-feedback {
+  padding: 12px 14px;
+  border: 1px solid rgba(94,226,194,0.16);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.035);
+}
+
+.diagnosis-feedback.is-success {
+  border-color: rgba(134,214,159,0.5);
+  color: #dffbe8;
+  background: rgba(134,214,159,0.12);
+}
+
+.diagnosis-feedback.is-warning {
+  border-color: rgba(243,199,95,0.55);
+  color: #fff0c7;
+  background: rgba(243,199,95,0.12);
+}
+
+.route-step[draggable="true"] {
+  cursor: grab;
+}
+
+.route-step[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.route-step:hover {
+  border-color: rgba(94,226,194,0.48);
+}
+
+@media (max-width: 760px) {
+  .ar-target-button,
+  .ar-qr-panel,
+  .diagnosis-evidence-card {
+    grid-template-columns: 1fr;
+  }
+
+  #arQrCode {
+    width: min(220px, 100%);
+    height: min(220px, 70vw);
+  }
+
+  .diagnosis-options {
+    grid-template-columns: 1fr;
+  }
+}

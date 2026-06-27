@@ -78,7 +78,7 @@ try {
   assert((await page.locator("#modTitle").innerText()).includes("Gestión del Conocimiento"), "La Unidad 1 muestra Gestion del Conocimiento.");
   assert(await page.locator(".mindmap-node").count() === 5, "La Unidad 1 contiene cinco temas teoricos.");
   assert(await page.locator(".sorter-zone").count() === 6, "La Unidad 1 conserva la clasificacion compleja por zonas.");
-  assert(await page.locator(".decision-card").count() === 3, "La Unidad 1 conserva decisiones con pistas.");
+  assert(await page.locator(".decision-card").count() >= 4, "La Unidad 1 conserva decisiones con pistas y mayor dificultad.");
   assert(await page.locator("#btnOpenModuleChat").isVisible(), "La Unidad 1 ofrece boton para abrir el chat independiente.");
   await page.locator("#btnOpenModuleChat").click();
   await page.waitForSelector("#chatView.is-active");
@@ -184,7 +184,7 @@ try {
   assert(await page.locator(".ar-target-button").count() === 4, "El laboratorio AR presenta cuatro marcadores genericos.");
   assert(!(await page.locator("#arTargetList").innerText()).includes("Capital humano"), "Antes del escaneo no se revela ningun capital en la lista.");
   assert(await page.locator("#arFloatingCard").isHidden(), "La informacion AR no aparece antes del escaneo.");
-  assert(await page.locator("#arQrCode img").isVisible(), "AR usa el marcador visual oficial del proyecto.");
+  assert(await page.locator("#arQrCode img").isVisible(), "AR usa un QR real escaneable.");
   await page.locator(".ar-target-button").nth(1).click();
   await page.locator("#btnSimulateARScan").click();
   await page.waitForSelector("#arTheoryView.is-active");

@@ -12,7 +12,8 @@
   </g>
   <text x="70" y="82" fill="#5ee2c2" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">TRANSFORMACIÓN DIGITAL</text>
   <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Tecnología al servicio del conocimiento</text>
-  <text x="70" y="184" fill="#d5e8e3" font-family="Inter,Segoe UI,sans-serif" font-size="24">Digitalizar no basta: la tecnología debe conectar personas, procesos, datos y cultura de aprendizaje.</text>
+  <text x="70" y="176" fill="#d5e8e3" font-family="Inter,Segoe UI,sans-serif" font-size="23">Digitalizar no basta: la tecnología debe conectar personas, procesos,</text>
+  <text x="70" y="208" fill="#d5e8e3" font-family="Inter,Segoe UI,sans-serif" font-size="23">datos y cultura de aprendizaje.</text>
 
   <circle cx="600" cy="398" r="145" fill="url(#core)" stroke="#e6fff8" stroke-width="4"/>
   <text x="600" y="372" text-anchor="middle" fill="#07110f" font-family="Inter,Segoe UI,sans-serif" font-size="28" font-weight="950">CONOCIMIENTO</text>
