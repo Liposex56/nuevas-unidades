@@ -552,11 +552,27 @@ let reinforcementStreak = 0;
 let activeSorterActivity = null;
 let sorterAssignments = {};
 let selectedSorterCardId = null;
+let activeInvestigationActivity = null;
+let activeRouteActivity = null;
+let interventionRouteOrder = [];
 let selectedFillWord = null;
 let decisionReviewAnswers = [];
 let activeTheoryResources = [];
 let currentCaseStep = 0;
 let currentCaseAnswers = [];
+let assistantHistory = [];
+let assistantHelpCounters = {};
+let assistantContext = {
+  activity: "Mapa del programa",
+  topic: "",
+  question: "",
+  selectedAnswer: "",
+  expectedAnswer: "",
+  hint: "",
+  feedback: "",
+  isCorrect: null,
+  attempts: 0
+};
 let arCameraStream = null;
 let arReturnView = "homeView";
 let selectedARTargetId = "humano";
@@ -943,40 +959,134 @@ function getCompanionMessage(moduleId) {
   return `Hola ${getStudentName()}, ${message}`;
 }
 
-function getAssistantResponse(mode, question = "") {
-  const moduleTitle = courseData[currentModuleId]?.title || "esta unidad";
-  const lowerQuestion = question.toLowerCase();
-  const isMatrix = lowerQuestion.includes("matriz") || lowerQuestion.includes("capital personal") || lowerQuestion.includes("balance");
-  const isAR = lowerQuestion.includes("realidad") || lowerQuestion.includes("aumentada") || lowerQuestion.includes("qr");
-  const isSECI = lowerQuestion.includes("seci") || lowerQuestion.includes("tácito") || lowerQuestion.includes("explícito");
+function setAssistantContext(context = {}) {
+  assistantContext = {
+    ...assistantContext,
+    ...context,
+    attempts: Number(context.attempts ?? assistantContext.attempts ?? 0)
+  };
+}
+
+function getAssistantContextKey(mode) {
+  return [
+    currentModuleId,
+    mode,
+    assistantContext.activity || "",
+    assistantContext.topic || "",
+    assistantContext.question || ""
+  ].join("|");
+}
+
+function pushAssistantMessage(role, text) {
+  assistantHistory.push({ role, text, time: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) });
+  if (assistantHistory.length > 16) assistantHistory = assistantHistory.slice(-16);
+  renderAssistantChat();
+  if (role === "assistant") {
+    const speech = document.getElementById("companionSpeech");
+    if (speech) speech.textContent = text;
+  }
+}
+
+function renderAssistantChat() {
+  const log = document.getElementById("assistantChatLog");
+  if (!log) return;
+  log.innerHTML = assistantHistory.map(message => `
+    <article class="assistant-message is-${message.role}">
+      <span>${message.role === "user" ? "Tú" : selectedCompanion?.name || "Acompañante"} · ${message.time}</span>
+      <p>${escapeHtml(message.text)}</p>
+    </article>
+  `).join("");
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetAssistantChatForModule(moduleId) {
+  assistantHelpCounters = {};
+  assistantHistory = [];
+  setAssistantContext({
+    activity: "Mapa de la unidad",
+    topic: courseData[moduleId]?.title || "",
+    question: "",
+    selectedAnswer: "",
+    expectedAnswer: "",
+    hint: "",
+    feedback: "",
+    isCorrect: null,
+    attempts: 0
+  });
+  pushAssistantMessage("assistant", getCompanionMessage(moduleId));
+}
+
+function getProgressiveHelp(mode, question = "") {
+  const key = getAssistantContextKey(mode);
+  const count = (assistantHelpCounters[key] || 0) + 1;
+  assistantHelpCounters[key] = count;
+  const title = courseData[currentModuleId]?.title || "esta unidad";
+  const selected = assistantContext.selectedAnswer;
+  const expected = assistantContext.expectedAnswer;
+  const hasSelection = !!selected;
+
+  if (mode === "review" && hasSelection) {
+    if (assistantContext.isCorrect === true) {
+      return `Tu respuesta va bien, ${getStudentName()}. La opción "${selected}" se alinea con el problema porque ${assistantContext.feedback || "responde al concepto central del caso"}.`;
+    }
+    if (count === 1) return `Veo que elegiste "${selected}". Antes de cambiarla, revisa si esa opción resuelve la causa del problema o solo toca un síntoma.`;
+    if (count === 2) return assistantContext.hint || "Pista más concreta: identifica qué capital o proceso está fallando y descarta opciones que solo agregan herramientas.";
+    if (count === 3) return `Ejemplo: si el problema es pérdida de saber experto, una buena respuesta debe capturar experiencia, transferirla y dejar evidencia reutilizable.`;
+    return `La solución esperada apunta a "${expected}". La razón es: ${assistantContext.feedback || "esa opción conecta diagnóstico, concepto y acción institucional"}.`;
+  }
 
   if (mode === "hint") {
-    return currentModuleId === 1
-      ? "Pista: identifica primero si el saber vive en la experiencia de una persona o si ya está documentado. Luego piensa qué paso SECI lo está moviendo."
-      : "Pista: en el caso, separa personas, documentos, relaciones, tecnología y reglas. Si mezclas esos planos, la decisión se vuelve débil.";
+    if (count === 1) return currentModuleId === 1
+      ? "Primera pista: ubica si el saber está en una persona, en un documento o en una práctica que se está transfiriendo."
+      : "Primera pista: separa el caso en personas, memoria institucional, relaciones, tecnología y reglas.";
+    if (count === 2) return assistantContext.hint || (currentModuleId === 1
+      ? "Pista más específica: mira el verbo. Observar suele ser socialización; documentar suele ser exteriorización; integrar documentos suele ser combinación."
+      : "Pista más específica: no empieces por comprar tecnología. Primero identifica qué conocimiento está en riesgo y quién debe sostenerlo.");
+    if (count === 3) return currentModuleId === 1
+      ? "Ejemplo: cuando una docente explica su método y el equipo lo convierte en guía, pasas de experiencia tácita a conocimiento explícito."
+      : "Ejemplo: si los aliados aportan información pero no reciben devolución, el problema principal es relacional y de gobernanza.";
+    return assistantContext.feedback || `Solución guiada: conecta la evidencia con el concepto de ${title} y decide qué acción conserva, organiza o moviliza conocimiento.`;
   }
+
   if (mode === "explain") {
+    if (assistantContext.topic) return `Estás trabajando "${assistantContext.topic}". En palabras sencillas: el concepto debe ayudarte a explicar qué conocimiento se crea, dónde queda guardado y cómo vuelve a usarse.`;
     return currentModuleId === 1
-      ? "Dicho de otra manera: gestionar conocimiento es evitar que la experiencia quede aislada. La organización aprende cuando observa, documenta, combina y aplica lo aprendido."
-      : "En Universidad Horizonte no basta con comprar plataformas. La solución debe conectar capital humano, intelectual y relacional mediante una estrategia digital con gobernanza.";
+      ? "Gestionar conocimiento es evitar que la experiencia quede aislada: se observa, se documenta, se combina y se practica."
+      : "En Universidad Horizonte, la estrategia debe unir capital humano, intelectual, relacional y tecnología con reglas claras de uso.";
   }
+
   if (mode === "example") {
     return currentModuleId === 1
-      ? "Ejemplo parecido: si una docente explica su método en una guía, hay exteriorización; si otro equipo usa esa guía hasta dominarla, hay interiorización."
-      : "Ejemplo parecido: si un aliado externo comparte datos y la universidad los convierte en casos de clase con retroalimentación, se fortalece capital relacional e intelectual.";
+      ? "Ejemplo aplicado: una mentoría permite socializar experiencia; una guía escrita la exterioriza; un repositorio la combina con otros recursos; una práctica docente la interioriza."
+      : "Ejemplo aplicado: una comunidad de práctica conversa problemas reales, el repositorio conserva evidencias y la analítica muestra si esos recursos se reutilizan.";
   }
-  if (mode === "review") {
-    return "Revisión guiada: antes de responder, subraya el problema central, decide qué concepto lo explica y descarta opciones que solo cambian herramientas sin cambiar aprendizaje.";
+
+  const lowerQuestion = question.toLowerCase();
+  if (lowerQuestion.includes("matriz") || lowerQuestion.includes("capital personal") || lowerQuestion.includes("balance")) {
+    return "En la matriz final, responde con honestidad: no se busca perfección, sino reconocer tu capital más fuerte, tu oportunidad de mejora y acciones concretas.";
   }
-  if (isMatrix) return "Para la matriz, no busques una respuesta perfecta: valora honestamente, interpreta tu capital más fuerte y argumenta acciones concretas en el balance final.";
-  if (isAR) return "En realidad aumentada, primero abre la cámara, selecciona o escanea un marcador y observa la capa detectada. La pregunta de observación te ayuda a conectar la imagen con el caso.";
-  if (isSECI) return "Recuerda SECI así: socializar es compartir experiencia; exteriorizar es escribirla; combinar es integrar documentos; interiorizar es practicar hasta convertirlo en habilidad.";
-  return `Buena pregunta sobre ${moduleTitle}. Intenta relacionarla con una evidencia concreta del caso: qué persona, documento, relación, tecnología o regla está afectada.`;
+  if (lowerQuestion.includes("realidad") || lowerQuestion.includes("aumentada") || lowerQuestion.includes("qr")) {
+    return "En realidad aumentada, primero activa la cámara y escanea un marcador. Si tu navegador no lo permite, usa el escaneo guiado como alternativa de compatibilidad.";
+  }
+  if (lowerQuestion.includes("seci") || lowerQuestion.includes("tácito") || lowerQuestion.includes("explícito")) {
+    return "Recuerda SECI: socializar comparte experiencia, exteriorizar la documenta, combinar integra documentos e interiorizar convierte recursos en práctica.";
+  }
+  return `Buena pregunta sobre ${title}. Relaciónala con una evidencia concreta: persona, documento, relación, tecnología o regla. Así tu análisis deja de ser general.`;
+}
+
+function getAssistantResponse(mode, question = "") {
+  return getProgressiveHelp(mode, question);
 }
 
 window.askCompanionAssistant = function(mode) {
-  const speech = document.getElementById("companionSpeech");
-  if (speech) speech.textContent = getAssistantResponse(mode);
+  const labels = {
+    hint: "Dame una pista sobre esta pregunta.",
+    explain: "Explícame este concepto.",
+    example: "Muéstrame un ejemplo.",
+    review: "Revisa mi respuesta."
+  };
+  pushAssistantMessage("user", labels[mode] || "Necesito ayuda.");
+  pushAssistantMessage("assistant", getAssistantResponse(mode));
 }
 
 function getViewedTheorySet(moduleId) {
@@ -1066,11 +1176,31 @@ function hasUnlockedEvaluation(moduleId) {
   return hasViewedAllTheory(moduleId) && hasViewedAllResources(moduleId) && hasCompletedReviewActivities(moduleId);
 }
 
+function hasSavedUnitBadge(moduleId) {
+  const badgeByUnit = {
+    1: "unidad-1-seci",
+    2: "unidad-2-estratega"
+  };
+  const badgeId = badgeByUnit[moduleId];
+  return !!badgeId && certificates.some(item => item.achievementId === badgeId || item.badgeId === badgeId);
+}
+
+function hasPassedUnitEvaluation(moduleId) {
+  const result = quizResultsByModule[moduleId];
+  if (!result?.passed) return false;
+  if (moduleId === 2) return result.type === "case";
+  return true;
+}
+
+function hasCompletedUnit(moduleId) {
+  return hasPassedUnitEvaluation(moduleId) || hasSavedUnitBadge(moduleId);
+}
+
 function getModuleCompletion(moduleId) {
   const theory = getTheoryProgress(moduleId);
   const resources = getResourceProgress(moduleId);
   const activity = activityProgressByModule[moduleId] || {};
-  const evaluationDone = !!quizResultsByModule[moduleId]?.passed;
+  const evaluationDone = hasCompletedUnit(moduleId);
   const total = theory.total + resources.total + 3;
   const complete = theory.viewed + resources.viewed + (activity.memory ? 1 : 0) + (activity.review ? 1 : 0) + (evaluationDone ? 1 : 0);
   return {
@@ -1082,6 +1212,51 @@ function getModuleCompletion(moduleId) {
   };
 }
 
+function getCompletedUnitCount() {
+  return Array.from({ length: MAX_MODULES }, (_, index) => index + 1)
+    .filter(id => hasCompletedUnit(id)).length;
+}
+
+function areCoreModulesApproved() {
+  return Array.from({ length: MAX_MODULES }, (_, index) => index + 1)
+    .every(id => hasCompletedUnit(id));
+}
+
+function hasCompletedFinalEvaluation() {
+  return !!finalEvaluationResult?.passed || !!activityProgressByModule.final?.capitalMatrix?.completed;
+}
+
+function isFinalEvaluationUnlocked() {
+  return areCoreModulesApproved();
+}
+
+function isProgramCertificateReady() {
+  return areCoreModulesApproved() && hasCompletedFinalEvaluation();
+}
+
+function getProgramProgress() {
+  return (getModuleCompletion(1).evaluationDone ? 40 : 0)
+    + (getModuleCompletion(2).evaluationDone ? 40 : 0)
+    + (hasCompletedFinalEvaluation() ? 20 : 0);
+}
+
+function getNextProgramActionLabel() {
+  if (!selectedCompanion) return "Elige un acompañante";
+  if (!getModuleCompletion(1).evaluationDone) return "Continuar con Unidad 1";
+  if (!getModuleCompletion(2).evaluationDone) return "Continuar con Unidad 2";
+  if (!hasCompletedFinalEvaluation()) return "Abrir evaluación final";
+  return "Revisar programa completado";
+}
+
+function openNextProgramStep() {
+  if (!selectedCompanion) return showToast("Por favor, selecciona un acompañante virtual antes de iniciar.");
+  if (!getModuleCompletion(1).evaluationDone) return openModule(1);
+  if (!getModuleCompletion(2).evaluationDone) return openModule(2);
+  if (!hasCompletedFinalEvaluation()) return openProgramFinalEvaluation();
+  renderProfile();
+  switchView("profileView");
+}
+
 function setHeaderIdentity() {
   const student = document.getElementById("headerStudentName");
   const greeting = document.getElementById("homeGreeting");
@@ -1091,9 +1266,8 @@ function setHeaderIdentity() {
 }
 
 function renderHomeProgress() {
-  const progress = Array.from({ length: MAX_MODULES }, (_, index) => getModuleCompletion(index + 1));
-  const overall = Math.round(progress.reduce((sum, item) => sum + item.percent, 0) / MAX_MODULES);
-  const completedUnits = progress.filter(item => item.evaluationDone).length;
+  const overall = getProgramProgress();
+  const completedUnits = getCompletedUnitCount();
   const value = document.getElementById("homeProgressValue");
   const bar = document.getElementById("homeProgressBar");
   const track = document.getElementById("homeProgressTrack");
@@ -1106,15 +1280,15 @@ function renderHomeProgress() {
   if (text) {
     text.textContent = !selectedCompanion
       ? "Selecciona tu acompañante para iniciar el recorrido."
-      : completedUnits === MAX_MODULES
-        ? "Has completado las dos unidades, la matriz final y tus insignias principales."
-        : `${completedUnits} de ${MAX_MODULES} unidades aprobadas. Tu siguiente destino es la Unidad ${highestUnlocked}.`;
+      : hasCompletedFinalEvaluation()
+        ? "Programa completado: dos unidades, evaluación final e insignias principales listas."
+        : completedUnits === MAX_MODULES
+          ? "2 de 2 unidades aprobadas. La evaluación final del programa ya está desbloqueada."
+          : `${completedUnits} de ${MAX_MODULES} unidades aprobadas. Avanza para desbloquear la matriz final.`;
   }
   if (continueButton) {
     continueButton.disabled = !selectedCompanion;
-    continueButton.textContent = !selectedCompanion
-      ? "Elige un acompañante"
-      : completedUnits === MAX_MODULES ? "Revisar recorrido completado" : `Continuar con Unidad ${highestUnlocked}`;
+    continueButton.textContent = getNextProgramActionLabel();
   }
 }
 
@@ -1161,8 +1335,9 @@ function renderSelectedCompanion() {
 function getMapGuideMessage() {
   if (!selectedCompanion) return "";
   if (highestUnlocked === 1) return "Comienza por la Unidad 1: distingue conocimiento tácito y explícito, domina el modelo SECI y conecta aprendizaje con innovación.";
-  if (quizResultsByModule[2]?.passed) return "Evaluación final completada. Puedes revisar tu matriz, tus insignias y el laboratorio aumentado.";
-  return "La Unidad 2 ya está abierta. Diagnostica Universidad Horizonte, usa los marcadores AR y construye tu matriz final.";
+  if (hasCompletedFinalEvaluation()) return "Programa completado. Puedes revisar tu matriz final, tus insignias y el certificado general.";
+  if (areCoreModulesApproved()) return "Las dos unidades están completas. Ya puedes abrir la Evaluación final del programa.";
+  return "La Unidad 2 ya está abierta. Diagnostica Universidad Horizonte, usa los marcadores AR y resuelve el caso integrador.";
 }
 
 function renderMap() {
@@ -1181,6 +1356,22 @@ function renderMap() {
       </button>
     `;
   }
+  const completedUnits = getCompletedUnitCount();
+  const finalUnlocked = isFinalEvaluationUnlocked();
+  const finalDone = hasCompletedFinalEvaluation();
+  const finalStatus = finalDone
+    ? "Completada"
+    : finalUnlocked
+      ? "Desbloqueada"
+      : "Bloqueada";
+  html += `
+    <button type="button" class="course-unit-node final-evaluation-node ${finalUnlocked ? 'is-open' : 'is-locked'} ${finalDone ? 'is-complete' : ''}" onclick="openProgramFinalEvaluation()" aria-disabled="${!finalUnlocked}" aria-label="Evaluación final del programa: ${finalStatus}">
+      <span class="course-orb"><strong>${finalDone ? '✓' : finalUnlocked ? '★' : '🔒'}</strong></span>
+      <span class="course-unit-label">Evaluación final</span>
+      <strong class="course-unit-title">Matriz de Valoración del Capital Personal</strong>
+      <small>${finalUnlocked ? `Unidades completadas: ${completedUnits} de 2` : `Bloqueada · Unidades completadas: ${completedUnits} de 2`}</small>
+    </button>
+  `;
   if (selectedCompanion) {
     html += `
       <aside class="map-guide-bubble">
@@ -1191,26 +1382,26 @@ function renderMap() {
   }
   document.getElementById("unitTrack").innerHTML = html;
   renderHomeProgress();
-  renderFinalEvaluationPanel();
 }
 
 // ==========================================
 // 4. MÓDULOS Y EVALUACIÓN
 // ==========================================
 window.openModule = function(id) {
-  if (id > highestUnlocked) return showToast("Debes aprobar el módulo anterior primero.");
+  if (id > highestUnlocked) return showToast("Debes aprobar la unidad anterior primero.");
   if (!selectedCompanion) return showToast("Por favor, selecciona un acompañante virtual antes de iniciar.");
   
   currentModuleId = id;
   const modData = courseData[id];
-  if (!modData || id > MAX_MODULES) return showToast("Este módulo estará disponible en una próxima fase.");
+  if (!modData || id > MAX_MODULES) return showToast("Esta unidad estará disponible en una próxima fase.");
   
-  // Llenar info del módulo
+  // Actualiza la información central de la unidad abierta.
   document.getElementById("moduleCompanionArt").innerHTML = selectedCompanion.art;
   document.getElementById("modKicker").textContent = id === 1 ? "Unidad 1 · Fundamentos" : "Unidad 2 · Caso integrador";
   document.getElementById("modTitle").textContent = modData.title;
   document.getElementById("modDesc").textContent = modData.desc;
   document.getElementById("companionSpeech").textContent = getCompanionMessage(id);
+  resetAssistantChatForModule(id);
   
   // Mapa Mental
   const viewedTheory = getViewedTheorySet(id);
@@ -1289,10 +1480,10 @@ function renderQuizLaunch() {
   const moduleData = courseData[currentModuleId];
   const challengeTitle = document.getElementById("moduleChallengeTitle");
   const challengeDescription = document.getElementById("moduleChallengeDescription");
-  if (moduleData?.completionMode === "matrix") {
-    if (challengeTitle) challengeTitle.textContent = "Evaluación final: Matriz de capital personal";
-    if (challengeDescription) challengeDescription.textContent = "Cierra la Unidad 2 valorando tus capitales, interpretando resultados y construyendo un balance argumentado.";
-    renderCapitalMatrixLaunch();
+  if (moduleData?.completionMode === "case") {
+    if (challengeTitle) challengeTitle.textContent = "Caso integrador de la Unidad 2";
+    if (challengeDescription) challengeDescription.textContent = "Analiza Universidad Horizonte y toma decisiones para completar la unidad. Necesitas mínimo 80%.";
+    renderCaseLaunch();
     return;
   }
   if (challengeTitle) challengeTitle.textContent = "Evaluación ICFES de la Unidad 1";
@@ -1363,7 +1554,26 @@ function renderCapitalMatrixLaunch() {
 }
 
 window.openFinalCapitalMatrix = function() {
-  openCapitalMatrix(currentModuleId, null, capitalMatrixActivity);
+  openProgramFinalEvaluation();
+}
+
+window.openProgramFinalEvaluation = function() {
+  if (!selectedCompanion) return showToast("Selecciona un acompañante antes de abrir la evaluación final.");
+  if (!isFinalEvaluationUnlocked()) {
+    return showToast(`Evaluación final bloqueada. Completa la Unidad 1 y la Unidad 2 (${getCompletedUnitCount()} de 2).`);
+  }
+  setAssistantContext({
+    activity: "Evaluación final del programa",
+    topic: "Matriz de Valoración del Capital Personal",
+    question: "Balance de capital personal",
+    selectedAnswer: "",
+    expectedAnswer: "",
+    hint: "Valora con honestidad y argumenta acciones concretas de mejora.",
+    feedback: "La matriz conecta capital humano, intelectual y relacional con tu proyecto personal.",
+    isCorrect: null,
+    attempts: 0
+  });
+  openCapitalMatrix("final", null, capitalMatrixActivity);
 }
 
 function renderCaseLaunch() {
@@ -1418,6 +1628,17 @@ window.startCaseSimulation = function(forceRetry = false) {
 
 function renderCaseStep() {
   const decision = caseScenario.decisions[currentCaseStep];
+  setAssistantContext({
+    activity: "Caso integrador",
+    topic: decision.title,
+    question: decision.prompt,
+    selectedAnswer: "",
+    expectedAnswer: decision.options[decision.correct],
+    hint: "Identifica primero el capital o proceso afectado y luego evalúa si la acción resuelve la causa.",
+    feedback: decision.rationale,
+    isCorrect: null,
+    attempts: currentCaseStep
+  });
   const progress = Math.round((currentCaseStep / caseScenario.decisions.length) * 100);
   document.getElementById("quizModalBody").innerHTML = `
     <div class="case-simulation">
@@ -1448,6 +1669,17 @@ window.selectCaseOption = function(optionIndex, button) {
   const decision = caseScenario.decisions[currentCaseStep];
   if (!decision || currentCaseAnswers[currentCaseStep] !== undefined) return;
   currentCaseAnswers[currentCaseStep] = optionIndex;
+  setAssistantContext({
+    activity: "Caso integrador",
+    topic: decision.title,
+    question: decision.prompt,
+    selectedAnswer: decision.options[optionIndex],
+    expectedAnswer: decision.options[decision.correct],
+    hint: "Relaciona la decisión con capital humano, intelectual, relacional, tecnología o gobernanza.",
+    feedback: decision.rationale,
+    isCorrect: optionIndex === decision.correct,
+    attempts: currentCaseStep + 1
+  });
 
   document.querySelectorAll(".case-options button").forEach((optionButton, index) => {
     optionButton.disabled = true;
@@ -1665,11 +1897,10 @@ function renderInlineQr(host, link, size = 62) {
 function renderARTargets() {
   const targetList = document.getElementById("arTargetList");
   if (!targetList) return;
-  targetList.innerHTML = arTargets.map(target => `
+  targetList.innerHTML = arTargets.map((target, index) => `
     <button type="button" class="ar-target-button ${target.id === selectedARTargetId ? "is-selected" : ""}" onclick="selectARTarget('${target.id}')">
       <span class="ar-marker-mini" id="arMarker-${target.id}" aria-hidden="true"></span>
-      <span><strong>${target.name}</strong><small>Marcador QR de escaneo</small></span>
-      <img src="${target.image}" alt="">
+      <span><strong>Marcador ${String.fromCharCode(65 + index)}</strong><small>Escanea para revelar la capa</small></span>
     </button>
   `).join("");
   arTargets.forEach(target => renderInlineQr(document.getElementById(`arMarker-${target.id}`), getARTargetLink(target.id), 58));
@@ -1685,8 +1916,8 @@ window.selectARTarget = function(targetId, rerenderList = true, reveal = false) 
   if (instructions && !detectedARTargetId) {
     instructions.innerHTML = `
       <span class="space-kicker">Marcador preparado</span>
-      <strong>${target.name}</strong>
-      <p>Apunta la cámara al QR de esta capa o usa el botón de escaneo guiado.</p>`;
+      <strong>Escaneo listo</strong>
+      <p>Apunta la cámara al QR. El nombre del capital se revelará únicamente cuando la capa sea detectada.</p>`;
   }
   if (reveal) revealARTarget(target.id, "manual");
 }
@@ -1746,12 +1977,31 @@ function revealARTarget(targetId, source = "scan") {
   if (stage) stage.classList.add("is-camera-active", "has-detected-layer");
   if (insight) {
     insight.hidden = false;
+    const insightImage = document.getElementById("arInsightImage");
+    if (insightImage) {
+      insightImage.src = target.image;
+      insightImage.alt = `Representación visual de ${target.name}`;
+    }
     document.getElementById("arInsightTitle").textContent = target.name;
     document.getElementById("arInsightDetail").textContent = target.detail || target.description;
+    document.getElementById("arInsightCharacteristics").innerHTML = (target.characteristics || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+    document.getElementById("arInsightExample").textContent = target.example || "";
     document.getElementById("arInsightFacts").innerHTML = (target.facts || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+    document.getElementById("arInsightRisks").innerHTML = (target.risks || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
     document.getElementById("arInsightActions").innerHTML = (target.actions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
     document.getElementById("arRelatedResources").innerHTML = (target.resources || []).map(item => `<span>${escapeHtml(item)}</span>`).join("");
   }
+  setAssistantContext({
+    activity: "Realidad aumentada",
+    topic: target.name,
+    question: target.challenge,
+    selectedAnswer: "",
+    expectedAnswer: target.description,
+    hint: "Observa qué evidencia del caso se conecta con esta capa.",
+    feedback: target.detail,
+    isCorrect: null,
+    attempts: 1
+  });
   renderARTargets();
   if (arActiveModuleId && arActiveMediaIndex !== null) {
     saveViewedResource(arActiveModuleId, arActiveMediaIndex);
@@ -1929,7 +2179,10 @@ function renderCapitalRatingRows(capital, savedRatings = []) {
 }
 
 function openCapitalMatrix(modId, mediaIndex, item, replaceCurrent = false) {
-  const saved = activityProgressByModule[modId]?.capitalMatrix || {};
+  const matrixKey = String(modId);
+  const modArg = `'${matrixKey.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+  const mediaArg = mediaIndex === null || mediaIndex === undefined ? "null" : String(mediaIndex);
+  const saved = activityProgressByModule[matrixKey]?.capitalMatrix || {};
   const photo = profilePictureDataUrl
     ? `<img src="${profilePictureDataUrl}" alt="Fotografía del perfil de ${escapeHtml(getStudentName())}">`
     : `<span aria-hidden="true">◎</span>`;
@@ -1955,7 +2208,7 @@ function openCapitalMatrix(modId, mediaIndex, item, replaceCurrent = false) {
       <img src="${item.imageUrl}" alt="Infografía con las instrucciones de la matriz de valoración del capital personal">
     </details>
 
-    <form id="capitalMatrixForm" class="capital-matrix-form" onsubmit="finalizeCapitalMatrix(event, ${modId}, ${mediaIndex})">
+    <form id="capitalMatrixForm" class="capital-matrix-form" onsubmit="finalizeCapitalMatrix(event, ${modArg}, ${mediaArg})">
       <nav class="capital-matrix-jump" aria-label="Secciones de la actividad">
         ${capitalMatrixData.capitals.map((capital, index) => `<a href="#capital-${capital.id}">${index + 1}. ${capital.name}</a>`).join("")}
         <a href="#capital-reflection">4. Reflexión</a>
@@ -2035,8 +2288,8 @@ function openCapitalMatrix(modId, mediaIndex, item, replaceCurrent = false) {
       <div class="capital-matrix-actions">
         <p id="capitalMatrixStatus" aria-live="polite">${saved.completed ? "Actividad completada. Puedes actualizarla o descargar tu balance." : saved.updatedAt ? "Borrador recuperado y listo para continuar." : "Tu avance se guardará automáticamente."}</p>
         <div>
-          <button type="button" class="ghost-button" onclick="saveCapitalMatrixDraft(${modId}, ${mediaIndex}, false)">Guardar borrador</button>
-          ${saved.completed ? `<button type="button" class="ghost-button" onclick="downloadCapitalMatrixBalance(${modId})">Descargar balance PDF</button>` : ""}
+          <button type="button" class="ghost-button" onclick="saveCapitalMatrixDraft(${modArg}, ${mediaArg}, false)">Guardar borrador</button>
+          ${saved.completed ? `<button type="button" class="ghost-button" onclick="downloadCapitalMatrixBalance(${modArg})">Descargar balance PDF</button>` : ""}
           <button type="submit" class="start-button">${saved.completed ? "Actualizar actividad" : "Finalizar actividad"}</button>
         </div>
       </div>
@@ -2048,11 +2301,11 @@ function openCapitalMatrix(modId, mediaIndex, item, replaceCurrent = false) {
   if (!form) return;
   form.addEventListener("input", () => {
     updateCapitalMatrixSummary();
-    scheduleCapitalMatrixDraftSave(modId, mediaIndex);
+    scheduleCapitalMatrixDraftSave(matrixKey, mediaIndex);
   });
   form.addEventListener("change", () => {
     updateCapitalMatrixSummary();
-    scheduleCapitalMatrixDraftSave(modId, mediaIndex);
+    scheduleCapitalMatrixDraftSave(matrixKey, mediaIndex);
   });
   updateCapitalMatrixSummary();
 }
@@ -2136,15 +2389,17 @@ function scheduleCapitalMatrixDraftSave(modId, mediaIndex) {
 }
 
 window.saveCapitalMatrixDraft = function(modId, mediaIndex, quiet = false) {
-  const existing = activityProgressByModule[modId]?.capitalMatrix || {};
+  const matrixKey = String(modId);
+  const existing = activityProgressByModule[matrixKey]?.capitalMatrix || {};
   const data = collectCapitalMatrixForm(!!existing.completed);
   if (!data) return;
-  activityProgressByModule[modId] = {
-    ...(activityProgressByModule[modId] || {}),
+  activityProgressByModule[matrixKey] = {
+    ...(activityProgressByModule[matrixKey] || {}),
     capitalMatrix: data
   };
   saveUserProgress();
-  renderModuleMedia(courseData[modId].media || []);
+  if (courseData[Number(modId)] && currentModuleId === Number(modId)) renderModuleMedia(courseData[Number(modId)].media || []);
+  renderHomeProgress();
   const status = document.getElementById("capitalMatrixStatus");
   if (status) status.textContent = `Borrador guardado ${new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}.`;
   if (!quiet) showToast("Tu matriz quedó guardada como borrador.");
@@ -2152,6 +2407,7 @@ window.saveCapitalMatrixDraft = function(modId, mediaIndex, quiet = false) {
 
 window.finalizeCapitalMatrix = function(event, modId, mediaIndex) {
   event.preventDefault();
+  const matrixKey = String(modId);
   const form = event.currentTarget;
   updateCapitalMatrixSummary();
   if (!form.reportValidity()) {
@@ -2165,37 +2421,41 @@ window.finalizeCapitalMatrix = function(event, modId, mediaIndex) {
     return;
   }
 
-  activityProgressByModule[modId] = {
-    ...(activityProgressByModule[modId] || {}),
+  activityProgressByModule[matrixKey] = {
+    ...(activityProgressByModule[matrixKey] || {}),
     capitalMatrix: data
   };
-  if (mediaIndex !== null && mediaIndex !== undefined) saveViewedResource(modId, mediaIndex);
-  if (modId === 2) {
-    quizResultsByModule[2] = {
+  if (mediaIndex !== null && mediaIndex !== undefined && courseData[Number(modId)]) saveViewedResource(Number(modId), mediaIndex);
+  if (matrixKey === "final") {
+    finalEvaluationResult = {
       type: "capitalMatrix",
       score: Math.round((data.total / 150) * 100),
       rawScore: data.total,
       total: 150,
+      totals: data.totals,
       level: data.level,
       passed: true,
       date: new Date().toLocaleDateString("es-CO")
     };
-    saveCertificate(2, courseData[2].title);
+    unlockBadge("matriz-capital");
   }
   saveUserProgress();
-  renderModuleMedia(courseData[modId].media || []);
-  updateModuleLocks();
-  renderQuizLaunch();
+  if (courseData[Number(modId)] && currentModuleId === Number(modId)) {
+    renderModuleMedia(courseData[Number(modId)].media || []);
+    updateModuleLocks();
+    renderQuizLaunch();
+  }
+  renderMap();
   const status = document.getElementById("capitalMatrixStatus");
   if (status) {
     status.textContent = `Actividad completada: ${data.total}/150 · ${data.level}.`;
   }
   showToast(`Matriz completada: ${data.total} de 150 puntos.`);
-  openCapitalMatrix(modId, mediaIndex, mediaIndex === null || mediaIndex === undefined ? capitalMatrixActivity : courseData[modId].media[mediaIndex], true);
+  openCapitalMatrix(matrixKey, mediaIndex, mediaIndex === null || mediaIndex === undefined || !courseData[Number(modId)] ? capitalMatrixActivity : courseData[Number(modId)].media[mediaIndex], true);
 }
 
 window.downloadCapitalMatrixBalance = function(modId) {
-  const data = activityProgressByModule[modId]?.capitalMatrix;
+  const data = activityProgressByModule[String(modId)]?.capitalMatrix;
   if (!data?.completed || !window.jspdf?.jsPDF) {
     showToast("Completa la actividad antes de descargar el balance.");
     return;
@@ -2590,7 +2850,6 @@ window.checkSortingReinforcement = function() {
       sorterStats: { attempts: reinforcementAttempts, score: percent, updatedAt: new Date().toISOString() }
     };
     markActivityComplete(currentModuleId, "memory");
-    unlockBadge("reto-clasificacion");
     launchActivityCelebration("reinforcementContainer");
     feedback.className = "reinforcement-feedback is-success";
     feedback.textContent = `Clasificación correcta: ${correct}/${total}. Tu análisis quedó guardado.`;
@@ -2602,10 +2861,116 @@ window.checkSortingReinforcement = function() {
   }
 }
 
+function renderInvestigationReinforcement(activity, practiceMode = false) {
+  const container = document.getElementById("reinforcementContainer");
+  if (!container || !activity) return;
+  activeInvestigationActivity = activity;
+  const progress = activityProgressByModule[currentModuleId] || {};
+  const allIds = activity.locations.map(item => item.id);
+  const savedCollected = progress.investigationEvidence || (progress.memory && !practiceMode ? allIds : []);
+  const collected = practiceMode ? [] : savedCollected;
+  const collectedSet = new Set(collected);
+  const isSolved = collectedSet.size === activity.locations.length && !practiceMode;
+
+  container.innerHTML = `
+    <div class="activity-command-bar investigation-command-bar">
+      <div>
+        <span class="activity-kicker">Investigación institucional</span>
+        <h3>${activity.title}</h3>
+        <p>${activity.instruction}</p>
+      </div>
+      <div class="activity-stats" aria-label="Evidencias recolectadas">
+        <span><strong id="investigationCollected">${collectedSet.size}/${activity.locations.length}</strong> evidencias</span>
+        <span><strong>${isSolved ? "100%" : Math.round((collectedSet.size / activity.locations.length) * 100) + "%"}</strong> diagnóstico</span>
+      </div>
+    </div>
+    <div class="investigation-layout">
+      <section class="horizon-map" aria-label="Espacios de Universidad Horizonte">
+        ${activity.locations.map(location => `
+          <article class="evidence-card ${collectedSet.has(location.id) ? "is-collected" : ""}" data-evidence-card="${location.id}">
+            <span class="evidence-index">${location.icon}</span>
+            <small>${escapeHtml(location.place)}</small>
+            <h4>${escapeHtml(location.title)}</h4>
+            <p>${escapeHtml(location.signal)}</p>
+            <button type="button" class="ghost-button" onclick="collectInvestigationEvidence('${location.id}')">
+              ${collectedSet.has(location.id) ? "Revisar evidencia" : "Abrir evidencia"}
+            </button>
+          </article>
+        `).join("")}
+      </section>
+      <aside class="investigation-board">
+        <span class="space-kicker">Tablero de investigación</span>
+        <h4>Evidencias agregadas</h4>
+        <div id="investigationBoardList">
+          ${collected.length
+            ? collected.map(id => {
+                const item = activity.locations.find(location => location.id === id);
+                return `<article><strong>${escapeHtml(item.capital)}</strong><span>${escapeHtml(item.title)}</span></article>`;
+              }).join("")
+            : "<p>Aún no has agregado evidencias al tablero.</p>"}
+        </div>
+      </aside>
+    </div>
+    <div class="reinforcement-actions">
+      <button type="button" class="ghost-button" onclick="resetReinforcement()">Reiniciar investigación</button>
+      <span class="activity-tip">Cuando agregues las seis evidencias, la primera actividad quedará completada.</span>
+    </div>
+    <p class="reinforcement-feedback ${isSolved ? "is-success" : ""}" id="reinforcementFeedback" role="status">${isSolved ? "Diagnóstico completo y guardado. Puedes repasar las evidencias cuando quieras." : "Abre cada espacio y decide qué evidencia aporta al diagnóstico."}</p>
+  `;
+}
+
+window.collectInvestigationEvidence = function(evidenceId) {
+  const activity = activeInvestigationActivity;
+  const evidence = activity?.locations?.find(item => item.id === evidenceId);
+  const feedback = document.getElementById("reinforcementFeedback");
+  if (!activity || !evidence) return;
+
+  const current = new Set(activityProgressByModule[currentModuleId]?.investigationEvidence || []);
+  current.add(evidenceId);
+  activityProgressByModule[currentModuleId] = {
+    ...(activityProgressByModule[currentModuleId] || {}),
+    investigationEvidence: [...current]
+  };
+  saveUserProgress();
+
+  setAssistantContext({
+    activity: "Investigación del problema",
+    topic: evidence.capital,
+    question: evidence.title,
+    selectedAnswer: evidence.signal,
+    expectedAnswer: evidence.capital,
+    hint: "Explica qué capital está afectado y qué acción permitiría conservar o movilizar ese conocimiento.",
+    feedback: evidence.explanation,
+    isCorrect: null,
+    attempts: current.size
+  });
+
+  if (feedback) {
+    feedback.className = "reinforcement-feedback is-success";
+    feedback.innerHTML = `<strong>${escapeHtml(evidence.capital)}:</strong> ${escapeHtml(evidence.explanation)}`;
+  }
+
+  if (current.size === activity.locations.length) {
+    activityProgressByModule[currentModuleId].investigationEvidence = [...current];
+    markActivityComplete(currentModuleId, "memory");
+    launchActivityCelebration("reinforcementContainer");
+    const speech = document.getElementById("companionSpeech");
+    if (speech) speech.textContent = `Muy bien, ${getStudentName()}. Ya reuniste las evidencias centrales de Universidad Horizonte.`;
+  } else {
+    renderInvestigationReinforcement(activity);
+    const nextFeedback = document.getElementById("reinforcementFeedback");
+    if (nextFeedback) {
+      nextFeedback.className = "reinforcement-feedback is-success";
+      nextFeedback.innerHTML = `<strong>${escapeHtml(evidence.capital)}:</strong> ${escapeHtml(evidence.explanation)}`;
+    }
+  }
+}
+
 function renderReinforcement(activity, practiceMode = false) {
   const container = document.getElementById("reinforcementContainer");
   if (!container || !activity) return;
   if (activity.mode === "sorter") return renderSortingReinforcement(activity, practiceMode);
+  if (activity.mode === "investigation") return renderInvestigationReinforcement(activity, practiceMode);
   const moduleActivityProgress = activityProgressByModule[currentModuleId] || {};
   const progressSolved = !!moduleActivityProgress.memory;
   const savedStats = moduleActivityProgress.memoryStats || {};
@@ -2831,6 +3196,20 @@ function renderDecisionReview(activity, practiceMode = false) {
 
 window.selectDecisionReview = function(index, optionIndex, button) {
   decisionReviewAnswers[index] = optionIndex;
+  const decision = reviewActivitiesData[currentModuleId]?.decisions?.[index];
+  if (decision) {
+    setAssistantContext({
+      activity: "Laboratorio de decisiones",
+      topic: reviewActivitiesData[currentModuleId]?.title || "",
+      question: decision.prompt,
+      selectedAnswer: decision.options[optionIndex],
+      expectedAnswer: decision.options[decision.correct],
+      hint: decision.hint,
+      feedback: decision.feedback,
+      isCorrect: optionIndex === decision.correct,
+      attempts: (assistantContext.attempts || 0) + 1
+    });
+  }
   const card = button.closest(".decision-card");
   card.querySelectorAll(".decision-options button").forEach(option => option.classList.remove("is-selected", "is-correct", "is-wrong"));
   button.classList.add("is-selected");
@@ -2895,10 +3274,172 @@ window.checkDecisionReview = function() {
   }
 }
 
+function getRouteSelections() {
+  const assignments = {};
+  document.querySelectorAll("[data-ecosystem-component]").forEach(select => {
+    assignments[select.dataset.ecosystemComponent] = select.value;
+  });
+  return assignments;
+}
+
+function renderInterventionRouteReview(activity, practiceMode = false, providedOrder = null, providedAssignments = null) {
+  const container = document.getElementById("reviewActivitiesContainer");
+  if (!container || !activity) return;
+  activeRouteActivity = activity;
+  const saved = practiceMode ? {} : activityProgressByModule[currentModuleId]?.reviewAnswers || {};
+  const isSolved = !!activityProgressByModule[currentModuleId]?.review && !practiceMode;
+  const sortedOrder = [...activity.steps].sort((a, b) => a.order - b.order).map(step => step.id);
+  interventionRouteOrder = providedOrder
+    || saved.routeOrder
+    || (isSolved ? sortedOrder : shuffleArray(sortedOrder));
+  const assignments = providedAssignments || saved.zoneAssignments || {};
+  const routeCorrect = interventionRouteOrder.every((id, index) => {
+    const step = activity.steps.find(item => item.id === id);
+    return step?.order === index + 1;
+  });
+  const zonesCorrect = activity.components.every(component => assignments[component.id] === component.zone);
+
+  container.innerHTML = `
+    <div class="activity-command-bar review-command-bar ecosystem-command-bar">
+      <div>
+        <span class="activity-kicker">Ecosistema de conocimiento</span>
+        <h3>${activity.title}</h3>
+        <p>${activity.instruction}</p>
+      </div>
+      <div class="activity-stats">
+        <span><strong>${routeCorrect && zonesCorrect && isSolved ? "100%" : "--"}</strong> precisión</span>
+        <span><strong>${activity.steps.length}</strong> pasos</span>
+      </div>
+    </div>
+    <div class="ecosystem-builder">
+      <section class="route-builder" aria-label="Ruta de intervención">
+        <div class="mini-activity-heading"><span>01</span><div><h3>Ordena la ruta</h3><p>Mueve las acciones hasta que formen una intervención viable.</p></div></div>
+        <div class="route-step-list" id="routeStepList">
+          ${interventionRouteOrder.map((stepId, index) => {
+            const step = activity.steps.find(item => item.id === stepId);
+            return `
+              <article class="route-step ${isSolved ? "is-checked" : ""}" data-route-step="${step.id}">
+                <span>${index + 1}</span>
+                <div><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.detail)}</p></div>
+                <div class="route-step-actions">
+                  <button type="button" class="ghost-button" onclick="moveRouteStep(${index}, -1)" ${index === 0 || isSolved ? "disabled" : ""}>Subir</button>
+                  <button type="button" class="ghost-button" onclick="moveRouteStep(${index}, 1)" ${index === interventionRouteOrder.length - 1 || isSolved ? "disabled" : ""}>Bajar</button>
+                </div>
+              </article>`;
+          }).join("")}
+        </div>
+      </section>
+      <section class="ecosystem-map" aria-label="Mapa institucional de componentes">
+        <div class="mini-activity-heading"><span>02</span><div><h3>Ubica componentes</h3><p>Asigna cada solución al eje institucional que sostiene mejor.</p></div></div>
+        <div class="ecosystem-zone-legend">
+          ${activity.zones.map(zone => `<span>${escapeHtml(zone.label)}</span>`).join("")}
+        </div>
+        <div class="ecosystem-component-list">
+          ${activity.components.map(component => `
+            <label class="ecosystem-component ${isSolved ? "is-checked" : ""}" data-component-card="${component.id}">
+              <span><strong>${escapeHtml(component.label)}</strong><small>${escapeHtml(component.detail)}</small></span>
+              <select data-ecosystem-component="${component.id}" ${isSolved ? "disabled" : ""}>
+                <option value="">Selecciona eje</option>
+                ${activity.zones.map(zone => `<option value="${zone.id}" ${assignments[component.id] === zone.id ? "selected" : ""}>${escapeHtml(zone.label)}</option>`).join("")}
+              </select>
+            </label>
+          `).join("")}
+        </div>
+      </section>
+    </div>
+    <div class="reinforcement-actions review-actions">
+      <button type="button" class="ghost-button" onclick="resetReviewActivities()">Reiniciar constructor</button>
+      <button type="button" class="start-button" onclick="checkInterventionRoute()">Comprobar ecosistema</button>
+    </div>
+    <p class="reinforcement-feedback ${isSolved ? "is-success" : ""}" id="reviewFeedback" role="status">${isSolved ? "Ecosistema construido y guardado. Puedes revisarlo cuando quieras." : "Ordena la ruta y asigna todos los componentes antes de comprobar."}</p>
+  `;
+  if (isSolved) markInterventionRoute(activity, true, assignments);
+}
+
+window.moveRouteStep = function(index, direction) {
+  if (!activeRouteActivity) return;
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= interventionRouteOrder.length) return;
+  const assignments = getRouteSelections();
+  const nextOrder = [...interventionRouteOrder];
+  [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
+  renderInterventionRouteReview(activeRouteActivity, true, nextOrder, assignments);
+}
+
+function markInterventionRoute(activity, final = false, assignments = getRouteSelections()) {
+  interventionRouteOrder.forEach((stepId, index) => {
+    const step = activity.steps.find(item => item.id === stepId);
+    const card = document.querySelector(`[data-route-step="${stepId}"]`);
+    if (!card || !step) return;
+    card.classList.toggle("is-correct", step.order === index + 1);
+    card.classList.toggle("is-wrong", step.order !== index + 1);
+  });
+  activity.components.forEach(component => {
+    const card = document.querySelector(`[data-component-card="${component.id}"]`);
+    if (!card) return;
+    card.classList.toggle("is-correct", assignments[component.id] === component.zone);
+    card.classList.toggle("is-wrong", !!assignments[component.id] && assignments[component.id] !== component.zone);
+  });
+}
+
+window.checkInterventionRoute = function() {
+  const activity = activeRouteActivity;
+  const feedback = document.getElementById("reviewFeedback");
+  if (!activity || !feedback) return;
+  const assignments = getRouteSelections();
+  if (Object.values(assignments).filter(Boolean).length < activity.components.length) {
+    showToast("Ubica todos los componentes del ecosistema antes de comprobar.");
+    return;
+  }
+  const routeCorrect = interventionRouteOrder.every((id, index) => {
+    const step = activity.steps.find(item => item.id === id);
+    return step?.order === index + 1;
+  });
+  const zonesCorrect = activity.components.every(component => assignments[component.id] === component.zone);
+  const correctSteps = interventionRouteOrder.filter((id, index) => activity.steps.find(item => item.id === id)?.order === index + 1).length;
+  const correctZones = activity.components.filter(component => assignments[component.id] === component.zone).length;
+
+  activityProgressByModule[currentModuleId] = {
+    ...(activityProgressByModule[currentModuleId] || {}),
+    reviewAnswers: {
+      routeOrder: [...interventionRouteOrder],
+      zoneAssignments: assignments,
+      updatedAt: new Date().toISOString()
+    }
+  };
+  saveUserProgress();
+  markInterventionRoute(activity, routeCorrect && zonesCorrect, assignments);
+
+  setAssistantContext({
+    activity: "Construcción del ecosistema",
+    topic: "Ruta de intervención",
+    question: "Orden y componentes institucionales",
+    selectedAnswer: `${correctSteps}/${activity.steps.length} pasos y ${correctZones}/${activity.components.length} componentes correctos`,
+    expectedAnswer: "Ruta completa y componentes ubicados en personas, procesos, conocimiento, tecnología y gobernanza.",
+    hint: "La secuencia debe empezar con diagnóstico del conocimiento en riesgo y cerrar con evaluación de resultados.",
+    feedback: "Una solución sostenible primero entiende el problema, luego captura y organiza conocimiento, después lo transfiere con tecnología y finalmente mide su impacto.",
+    isCorrect: routeCorrect && zonesCorrect,
+    attempts: (assistantContext.attempts || 0) + 1
+  });
+
+  if (routeCorrect && zonesCorrect) {
+    markActivityComplete(currentModuleId, "review");
+    launchActivityCelebration("reviewActivitiesContainer");
+    feedback.className = "reinforcement-feedback is-success";
+    feedback.textContent = "Ecosistema correcto: la ruta y los componentes quedaron guardados.";
+    const speech = document.getElementById("companionSpeech");
+    if (speech) speech.textContent = `Excelente, ${getStudentName()}. Construiste una ruta institucional completa para Universidad Horizonte.`;
+  } else {
+    feedback.className = "reinforcement-feedback is-warning";
+    feedback.textContent = `Ajusta tu diseño: ${correctSteps}/${activity.steps.length} pasos en orden y ${correctZones}/${activity.components.length} componentes bien ubicados.`;
+  }
+}
+
 function renderReviewActivities(activity, practiceMode = false) {
   const container = document.getElementById("reviewActivitiesContainer");
   if (!container || !activity) return;
   if (activity.mode === "decisionLab") return renderDecisionReview(activity, practiceMode);
+  if (activity.mode === "interventionRoute") return renderInterventionRouteReview(activity, practiceMode);
   const progressSolved = !!activityProgressByModule[currentModuleId]?.review;
   const saved = practiceMode ? {} : activityProgressByModule[currentModuleId]?.reviewAnswers || {};
   const isSolved = progressSolved && !practiceMode;
@@ -3108,6 +3649,17 @@ window.openTeamPhoto = function(src, name) {
 
 window.openTheory = function(modId, nodeId) {
   const node = courseData[modId].theoryNodes.find(n => n.id === nodeId);
+  setAssistantContext({
+    activity: "Teoría",
+    topic: node.title,
+    question: `Comprender ${node.title}`,
+    selectedAnswer: "",
+    expectedAnswer: "",
+    hint: "Lee la idea central y piensa cómo se aplicaría en Universidad Horizonte.",
+    feedback: "La teoría sirve como base para resolver actividades, recursos y evaluación.",
+    isCorrect: null,
+    attempts: 0
+  });
   activeTheoryResources = [...(node.learnMoreResources || [])];
   if (node.learnMoreVideo) activeTheoryResources.unshift({ ...node.learnMoreVideo, type: "video" });
   saveViewedTheory(modId, nodeId);
@@ -3308,86 +3860,20 @@ function shuffleArray(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function areCoreModulesApproved() {
-  return Array.from({ length: MAX_MODULES }, (_, index) => index + 1)
-    .every(id => !!quizResultsByModule[id]?.passed || certificates.some(cert => cert.modId === id));
-}
-
 function renderFinalEvaluationPanel() {
-  const panel = document.getElementById("finalEvaluationPanel");
-  if (!panel) return;
-  panel.hidden = !areCoreModulesApproved();
-  if (!panel.hidden) {
-    document.getElementById("finalEvaluationContainer").innerHTML = finalEvaluationResult
-      ? `
-        <div class="evaluation-summary ${finalEvaluationResult.score === 100 ? 'is-perfect' : ''}">
-          <strong>Último resultado: ${finalEvaluationResult.score}%</strong>
-          <span>${finalEvaluationResult.passed ? 'Evaluación final aprobada.' : 'Puedes repetirla con nuevas preguntas.'}</span>
-        </div>
-      `
-      : "";
-  }
+  // La evaluación final del programa se muestra como tarjeta del mapa principal.
 }
 
 function buildFinalQuestions() {
-  currentFinalQuestions = [1, 2, 3].flatMap(unitId =>
-    shuffleArray(courseData[unitId].quiz).slice(0, 5).map(question => ({
-      ...question,
-      unitId
-    }))
-  );
-  currentFinalQuestions = shuffleArray(currentFinalQuestions);
+  currentFinalQuestions = [];
 }
 
 window.startFinalEvaluation = function() {
-  if (!areCoreModulesApproved()) return showToast("Primero aprueba las tres unidades.");
-  buildFinalQuestions();
-  openQuizModal("Evaluación final integradora", "Reto final");
-
-  let html = `<form id="finalQuizForm" class="quiz-form final-quiz-form">`;
-  currentFinalQuestions.forEach((q, idx) => {
-    html += `
-      <div class="quiz-question">
-        <span class="space-kicker">Unidad ${q.unitId}</span>
-        <h4>${idx + 1}. ${q.q}</h4>
-        ${q.options.map((opt, optIdx) => `
-          <label class="quiz-option"><input type="radio" name="fq${idx}" value="${optIdx}" required> ${opt}</label>
-        `).join("")}
-      </div>`;
-  });
-  html += `<button type="button" class="start-button" onclick="submitFinalEvaluation()" style="width:100%; margin-top:10px;">Calificar evaluación final</button></form>`;
-  document.getElementById("quizModalBody").innerHTML = html;
+  openProgramFinalEvaluation();
 }
 
 window.submitFinalEvaluation = function() {
-  const form = document.getElementById("finalQuizForm");
-  if (!form || currentFinalQuestions.length === 0) return;
-
-  let correctas = 0;
-  for (let i = 0; i < currentFinalQuestions.length; i++) {
-    const selected = form.querySelector(`input[name="fq${i}"]:checked`);
-    if (!selected) return showToast("Por favor responde todas las preguntas de la evaluación final.");
-    if (parseInt(selected.value) === currentFinalQuestions[i].correct) correctas++;
-  }
-
-  const porcentaje = Math.round((correctas / currentFinalQuestions.length) * 100);
-  if (!finalEvaluationResult || porcentaje >= finalEvaluationResult.score) {
-    finalEvaluationResult = {
-      score: porcentaje,
-      correctas,
-      total: currentFinalQuestions.length,
-      passed: porcentaje >= 80,
-      date: new Date().toLocaleDateString("es-CO")
-    };
-    saveUserProgress();
-  }
-  document.getElementById("quizModalBody").innerHTML = `
-    <div class="final-result ${porcentaje >= 80 ? 'is-success' : 'is-warning'}">
-      <h3>${porcentaje >= 80 ? 'Evaluación final aprobada' : 'Puedes repetir la evaluación'}</h3>
-      <p>Resultado: ${correctas} de ${currentFinalQuestions.length} respuestas correctas (${porcentaje}%).</p>
-      <button type="button" class="start-button" onclick="startFinalEvaluation()">Repetir con nuevas preguntas</button>
-    </div>
-  `;
+  openProgramFinalEvaluation();
 }
 
 // ==========================================
@@ -3430,9 +3916,9 @@ function saveCertificate(modId, modTitle) {
 
 function hasUnlockedBadge(badgeId) {
   if (certificates.some(item => item.achievementId === badgeId || item.badgeId === badgeId)) return true;
-  if (badgeId === "unidad-1-seci") return !!quizResultsByModule[1]?.passed;
-  if (badgeId === "matriz-capital") return !!quizResultsByModule[2]?.passed || !!activityProgressByModule[2]?.capitalMatrix?.completed;
-  if (badgeId === "reto-clasificacion") return Object.values(activityProgressByModule).some(progress => !!progress?.memory);
+  if (badgeId === "unidad-1-seci") return hasCompletedUnit(1);
+  if (badgeId === "unidad-2-estratega") return hasCompletedUnit(2);
+  if (badgeId === "matriz-capital") return hasCompletedFinalEvaluation();
   if (badgeId === "laboratorio-ar") return Object.values(activityProgressByModule).some(progress => !!progress?.ar);
   return false;
 }
@@ -3447,7 +3933,7 @@ function renderProfile() {
     : `<span aria-hidden="true">👤</span>`;
 
   const certContainer = document.getElementById("profileCertCard");
-  const completedAll = areCoreModulesApproved();
+  const completedAll = isProgramCertificateReady();
   certContainer.innerHTML = `
     <div class="badge-board">
       ${badgeDefinitions.map(badge => {
@@ -3468,7 +3954,7 @@ function renderProfile() {
     <div class="final-certificate-card ${completedAll ? 'is-ready' : ''}">
       <div>
         <strong>${completedAll ? 'Certificado final disponible' : 'Certificado final bloqueado'}</strong>
-        <p>${completedAll ? 'Completaste el recorrido. Puedes generar el reconocimiento general.' : 'Completa la Unidad 1 y la evaluación final de la Unidad 2 para obtenerlo.'}</p>
+        <p>${completedAll ? 'Completaste las dos unidades y la evaluación final. Puedes generar el reconocimiento general.' : 'Completa la Unidad 1, la Unidad 2 y la Matriz de Valoración del Capital Personal para obtenerlo.'}</p>
       </div>
       <button class="ghost-button" ${completedAll ? '' : 'disabled'} onclick="openCertificate('Recorrido completo: Gestión del Conocimiento y Caso Interactivo')">Ver certificado final</button>
     </div>
@@ -3761,18 +4247,20 @@ document.getElementById("btnSyncProgress").onclick = () => syncProgressNow();
 document.getElementById("assistantForm").onsubmit = (event) => {
   event.preventDefault();
   const input = document.getElementById("assistantQuestion");
-  const speech = document.getElementById("companionSpeech");
-  if (!input || !speech) return;
+  if (!input) return;
   const question = input.value.trim();
-  speech.textContent = question
-    ? getAssistantResponse("free", question)
-    : "Escríbeme una pregunta corta sobre la teoría, la actividad, la realidad aumentada o la matriz.";
+  if (!question) {
+    pushAssistantMessage("assistant", "Escríbeme una pregunta corta sobre la teoría, la actividad, la realidad aumentada o la matriz.");
+    return;
+  }
+  pushAssistantMessage("user", question);
+  pushAssistantMessage("assistant", getAssistantResponse("free", question));
   input.value = "";
 };
 const finalEvaluationButton = document.getElementById("btnStartFinalEvaluation");
 if (finalEvaluationButton) finalEvaluationButton.onclick = () => startFinalEvaluation();
 document.getElementById("btnContinueJourney").onclick = () => {
-  openModule(areCoreModulesApproved() ? MAX_MODULES : highestUnlocked);
+  openNextProgramStep();
 };
 document.getElementById("btnStartARCamera").onclick = () => startARCamera();
 document.getElementById("btnSimulateARScan").onclick = () => revealARTarget(selectedARTargetId, "manual");

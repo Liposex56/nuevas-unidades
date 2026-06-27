@@ -10,12 +10,13 @@ No está conectado al repositorio ni al despliegue original.
 - Unidad 2: Caso Integrador Universidad Horizonte.
 - Laboratorio web de realidad aumentada con cámara, marcadores QR por capital,
   información ampliada, datos clave, acciones sugeridas y recursos relacionados.
-- Actividades renovadas: clasificación por zonas, decisiones con pistas y
-  retroalimentación contextual.
-- Evaluación final de la Unidad 2: Matriz interactiva de capital personal con
+- Actividades renovadas: investigación de evidencias, construcción de ecosistema,
+  ruta de intervención y retroalimentación contextual.
+- Evaluación final del programa: Matriz interactiva de capital personal con
   30 valoraciones, resultados automáticos, siete reflexiones, guardado de
   borrador y balance descargable en PDF.
-- Insignias digitales desbloqueables y certificado final del recorrido.
+- Insignias digitales desbloqueables y certificado final únicamente al completar
+  las dos unidades y la matriz.
 
 ## Estructura
 

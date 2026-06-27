@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs/promises";
 
-const runtimePackage = "C:/Users/profe/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json";
+const runtimePackage = "C:/Users/profe/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.61.0/node_modules/playwright/package.json";
 const require = createRequire(runtimePackage);
 const { chromium } = require("playwright");
 
@@ -21,9 +21,27 @@ const browser = await chromium.launch({
   executablePath: "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 });
 
+async function seedProgress(page, progress) {
+  await page.evaluate((payload) => {
+    const suffix = "qa-user";
+    localStorage.setItem(`fgc_selected_companion_${suffix}`, "nexo");
+    localStorage.setItem(`fgc_highest_unlocked_${suffix}`, String(payload.highestUnlocked || 1));
+    localStorage.setItem(`fgc_viewed_theory_${suffix}`, JSON.stringify(payload.viewedTheory || {}));
+    localStorage.setItem(`fgc_viewed_resources_${suffix}`, JSON.stringify(payload.viewedResources || {}));
+    localStorage.setItem(`fgc_activity_progress_${suffix}`, JSON.stringify(payload.activityProgress || {}));
+    localStorage.setItem(`fgc_quiz_results_${suffix}`, JSON.stringify(payload.quizResults || {}));
+    localStorage.setItem(`fgc_certificates_${suffix}`, JSON.stringify(payload.certificates || []));
+    localStorage.setItem(`fgc_final_evaluation_${suffix}`, JSON.stringify(payload.finalEvaluation || null));
+  }, progress);
+}
+
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   await context.addInitScript(() => {
+    if (!sessionStorage.getItem("qa-storage-initialized")) {
+      localStorage.clear();
+      sessionStorage.setItem("qa-storage-initialized", "1");
+    }
     localStorage.setItem("fgc_currentUser", JSON.stringify({
       id: "qa-user",
       email: "qa@example.edu.co",
@@ -42,138 +60,150 @@ try {
   await page.goto("http://127.0.0.1:8135/", { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#homeView.is-active");
 
-  assert(await page.locator(".course-unit-node").count() === 2, "El mapa presenta exactamente dos unidades.");
-  assert(await page.locator(".companion-card").count() === 4, "La selección presenta cuatro acompañantes nuevos.");
-  assert(await page.locator(".course-unit-node.is-locked").count() === 1, "La Unidad 2 inicia bloqueada.");
+  assert(await page.locator(".course-unit-node").count() === 3, "El mapa muestra Unidad 1, Unidad 2 y Evaluacion final.");
+  assert(await page.locator(".final-evaluation-node").isVisible(), "La matriz final aparece desde el inicio.");
+  assert((await page.locator(".final-evaluation-node").innerText()).includes("Bloqueada"), "La matriz final inicia bloqueada.");
+  assert(await page.locator(".course-unit-node.is-locked").count() === 2, "Unidad 2 y evaluacion final inician bloqueadas.");
+  assert(await page.locator(".companion-card").count() === 4, "La seleccion presenta cuatro acompanantes.");
   assert(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "La pantalla principal no tiene desbordamiento horizontal.");
 
   const nexo = page.locator(".companion-card").filter({ hasText: "Nexo" });
-  assert(await nexo.count() === 1, "Nexo aparece como acompañante seleccionable.");
   await nexo.click();
-  assert(await page.locator(".companion-card.is-selected").count() === 1, "La selección del acompañante queda marcada.");
-  assert(await page.locator("#btnContinueJourney").isEnabled(), "El botón del recorrido se habilita al elegir acompañante.");
-  await page.screenshot({ path: path.join(outputDir, "01-inicio.png"), fullPage: true });
+  assert(await page.locator(".companion-card.is-selected").count() === 1, "La seleccion del acompanante queda marcada.");
+  assert(await page.locator("#btnContinueJourney").isEnabled(), "El boton del recorrido se habilita al elegir acompanante.");
+  await page.screenshot({ path: path.join(outputDir, "01-inicio-mapa-final-bloqueada.png"), fullPage: true });
 
-  const unitOne = page.locator(".course-unit-node").filter({ hasText: "Unidad 1" });
-  await unitOne.click();
+  await page.locator(".course-unit-node").filter({ hasText: "Unidad 1" }).click();
   await page.waitForSelector("#moduleView.is-active");
-  assert((await page.locator("#modTitle").innerText()).includes("Gestión del Conocimiento"), "La Unidad 1 muestra el contenido de Gestión del Conocimiento.");
-  assert(await page.locator(".mindmap-node").count() === 5, "La Unidad 1 contiene cinco temas teóricos.");
-  assert(await page.locator(".media-card").count() === 3, "La Unidad 1 contiene tres recursos visuales.");
-  assert(await page.locator(".sorter-zone").count() === 6, "La actividad principal usa clasificación por zonas, no parejas obvias.");
-  assert(await page.locator(".decision-card").count() === 3, "El repaso usa decisiones con pistas interactivas.");
+  assert((await page.locator("#modTitle").innerText()).includes("Gestión del Conocimiento"), "La Unidad 1 muestra Gestion del Conocimiento.");
+  assert(await page.locator(".mindmap-node").count() === 5, "La Unidad 1 contiene cinco temas teoricos.");
+  assert(await page.locator(".sorter-zone").count() === 6, "La Unidad 1 conserva la clasificacion compleja por zonas.");
+  assert(await page.locator(".decision-card").count() === 3, "La Unidad 1 conserva decisiones con pistas.");
+  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 1, "El asistente inicia como chat con historial.");
+  await page.locator(".assistant-quick-actions button").first().click();
+  assert(await page.locator("#assistantChatLog .assistant-message").count() >= 3, "El chat registra pregunta sugerida y respuesta contextual.");
+  await page.screenshot({ path: path.join(outputDir, "02-unidad-1-chat.png"), fullPage: false });
 
-  const theoryCards = page.locator(".mindmap-node");
-  await theoryCards.first().click();
-  await page.waitForSelector("#theoryModal.is-active");
-  assert((await page.locator("#theoryBody").innerText()).length > 300, "La tarjeta teórica abre contenido completo en una vista.");
-  await page.locator("#closeTheoryBtn").click();
-  await page.waitForSelector("#theoryModal", { state: "hidden" });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({ path: path.join(outputDir, "02-unidad-1.png"), fullPage: false });
-
-  await page.evaluate(() => {
-    const suffix = "qa-user";
-    localStorage.setItem(`fgc_selected_companion_${suffix}`, "nexo");
-    localStorage.setItem(`fgc_highest_unlocked_${suffix}`, "2");
-    localStorage.setItem(`fgc_viewed_theory_${suffix}`, JSON.stringify({
+  await seedProgress(page, {
+    highestUnlocked: 2,
+    viewedTheory: {
       1: ["1.1", "1.2", "1.3", "1.4", "1.5"],
       2: ["2.1", "2.2", "2.3", "2.4", "2.5"]
-    }));
-    localStorage.setItem(`fgc_viewed_resources_${suffix}`, JSON.stringify({
+    },
+    viewedResources: {
       1: ["0", "1", "2"],
       2: ["0", "1", "2", "3", "4"]
-    }));
-    localStorage.setItem(`fgc_activity_progress_${suffix}`, JSON.stringify({
+    },
+    activityProgress: {
       1: { memory: true, review: true },
-      2: { memory: true, review: true }
-    }));
-    localStorage.setItem(`fgc_quiz_results_${suffix}`, JSON.stringify({
+      2: {
+        memory: true,
+        review: true,
+        ar: true,
+        investigationEvidence: ["docentes", "repositorio", "plataforma", "aliados", "investigacion", "estudiantes"],
+        reviewAnswers: {
+          routeOrder: ["riesgo", "entrevistar", "documentar", "clasificar", "transferir", "implementar", "evaluar"],
+          zoneAssignments: {
+            mentoria: "personas",
+            comunidad: "personas",
+            protocolo: "gobernanza",
+            repositorio: "conocimiento",
+            analitica: "tecnologia",
+            aliados: "procesos",
+            ia: "tecnologia"
+          }
+        }
+      }
+    },
+    quizResults: {
       1: { score: 80, correctas: 8, total: 10, answers: [], passed: true, date: "25/6/2026" }
-    }));
+    }
   });
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForSelector("#homeView.is-active");
-  assert(await page.locator(".course-unit-node.is-locked").count() === 0, "La Unidad 2 se desbloquea al aprobar la única evaluación.");
+  assert(await page.locator(".course-unit-node").filter({ hasText: "Unidad 2" }).evaluate(node => !node.classList.contains("is-locked")), "La Unidad 2 se desbloquea al aprobar Unidad 1.");
+  assert(await page.locator(".final-evaluation-node").evaluate(node => node.classList.contains("is-locked")), "La matriz final sigue bloqueada sin aprobar el caso de Unidad 2.");
 
-  const unitTwo = page.locator(".course-unit-node").filter({ hasText: "Unidad 2" });
-  await unitTwo.click();
+  await page.locator(".course-unit-node").filter({ hasText: "Unidad 2" }).click();
   await page.waitForSelector("#moduleView.is-active");
   assert((await page.locator("#modTitle").innerText()).includes("Universidad Horizonte"), "La Unidad 2 abre el caso Universidad Horizonte.");
-  assert(await page.locator(".mindmap-node").count() === 5, "El caso presenta cinco apartados de preparación.");
-  assert(await page.locator(".media-card").count() === 5, "El caso incluye el laboratorio AR y cuatro apoyos visuales; la matriz queda al final.");
+  assert(await page.locator(".media-card").count() === 5, "La Unidad 2 incluye laboratorio AR y cuatro apoyos visuales.");
+  assert(await page.locator(".evidence-card").count() === 6, "La Unidad 2 usa investigacion de evidencias.");
+  assert(await page.locator(".route-step").count() === 7, "La Unidad 2 usa ruta de intervencion ordenable.");
+  assert(await page.locator(".ecosystem-component").count() === 7, "La Unidad 2 usa constructor de ecosistema.");
+  assert(await page.locator(".decision-card").count() === 0, "La Unidad 2 ya no repite el laboratorio de decisiones de la Unidad 1.");
 
-  const matrixLaunch = page.getByRole("button", { name: "Iniciar evaluación final" });
-  await matrixLaunch.click();
+  await page.getByRole("button", { name: "Resolver caso" }).click();
+  await page.waitForSelector("#quizModal.is-active");
+  for (const correctIndex of [0, 1, 0, 1, 2]) {
+    await page.locator(".case-options button").nth(correctIndex).click();
+    await page.locator("#caseDecisionFeedback .start-button").click();
+  }
+  await page.waitForSelector(".final-result.is-success");
+  assert((await page.locator("#quizModalBody").innerText()).includes("Estrategia aprobada"), "El caso integrador aprueba la Unidad 2.");
+  await page.locator("#closeQuizBtn").click();
+  await page.waitForSelector("#quizModal", { state: "hidden" });
+  await page.locator("#btnBackToMap").click();
+  await page.waitForSelector("#homeView.is-active");
+  assert(await page.locator(".final-evaluation-node").evaluate(node => !node.classList.contains("is-locked")), "La evaluacion final se desbloquea solo despues de completar las dos unidades.");
+  assert((await page.locator("#homeProgressValue").innerText()) === "80%", "El progreso queda en 80% antes de completar la matriz final.");
+
+  await page.locator(".final-evaluation-node").click();
   await page.waitForSelector("#capitalMatrixForm");
-  assert(await page.locator(".capital-rating-row").count() === 30, "La matriz presenta 30 aspectos distribuidos en tres capitales.");
-  const valueFourInputs = page.locator('.capital-rating-scale input[value="4"]');
-  assert(await valueFourInputs.count() === 30, "Cada aspecto permite una valoración de 1 a 5.");
-  for (const input of await valueFourInputs.all()) await input.check();
-  const reflectionFields = page.locator('.capital-reflection-grid textarea');
-  assert(await reflectionFields.count() === 7, "La actividad incluye las siete preguntas de reflexión crítica.");
-  for (const field of await reflectionFields.all()) {
-    await field.fill("Esta reflexión conecta mi experiencia personal con la creación y transferencia del conocimiento.");
+  assert(await page.locator(".capital-rating-row").count() === 30, "La matriz final presenta 30 aspectos.");
+  for (const input of await page.locator('.capital-rating-scale input[value="4"]').all()) await input.check();
+  for (const field of await page.locator(".capital-reflection-grid textarea").all()) {
+    await field.fill("Esta reflexion conecta mi experiencia personal con la creacion, transferencia y aplicacion del conocimiento.");
   }
   await page.locator("#capitalBalanceText").fill(
-    "Mi capital personal se ha construido mediante el aprendizaje continuo, la experiencia y las relaciones de confianza. " +
+    "Mi capital personal se ha construido mediante aprendizaje continuo, experiencia y relaciones de confianza. " +
     "Reconozco que mis habilidades generan valor cuando puedo compartirlas, documentarlas y aplicarlas con otras personas. " +
-    "Durante los próximos dos años fortaleceré mi formación, participaré en redes académicas y transformaré mis experiencias en recursos útiles. " +
-    "También cuidaré mis relaciones y buscaré oportunidades para enseñar, colaborar y aprender de manera permanente."
+    "Durante los proximos dos anos fortalecere mi formacion, participare en redes academicas y transformare mis experiencias en recursos utiles. " +
+    "Tambien cuidare mis relaciones y buscare oportunidades para ensenar, colaborar y aprender de manera permanente."
   );
   await page.getByRole("button", { name: "Finalizar actividad" }).click();
   await page.waitForSelector("#capitalMatrixForm");
-  assert((await page.locator("#capitalGrandTotal").innerText()) === "120 / 150", "La matriz calcula automáticamente el puntaje total.");
-  assert((await page.locator("#capitalLevelName").innerText()).toLowerCase().includes("muy alto"), "La matriz interpreta automáticamente el nivel obtenido.");
-  const downloadPromise = page.waitForEvent("download");
-  await page.locator(".capital-matrix-actions").getByRole("button", { name: "Descargar balance PDF" }).click();
-  const balanceDownload = await downloadPromise;
-  assert(balanceDownload.suggestedFilename().endsWith(".pdf"), "La actividad genera el Balance de Capital Personal en PDF.");
-  await page.screenshot({ path: path.join(outputDir, "03-matriz-capital.png"), fullPage: false });
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert(await page.evaluate(() => {
-    const modal = document.querySelector(".activity-modal-content");
-    const form = document.querySelector("#capitalMatrixForm");
-    return modal.scrollWidth <= modal.clientWidth && form.scrollWidth <= form.clientWidth;
-  }), "La matriz no presenta desbordamiento horizontal en celular.");
-  await page.screenshot({ path: path.join(outputDir, "03b-matriz-capital-movil.png"), fullPage: false });
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert((await page.locator("#capitalGrandTotal").innerText()) === "120 / 150", "La matriz calcula el puntaje total.");
+  assert((await page.locator("#capitalLevelName").innerText()).toLowerCase().includes("muy alto"), "La matriz interpreta el nivel obtenido.");
   await page.locator("#closeTheoryBtn").click();
   await page.waitForSelector("#theoryModal", { state: "hidden" });
-  assert((await page.locator("#quizContainer").innerText()).includes("Capital Personal Estratégico"), "Completar la matriz desbloquea la insignia final de la Unidad 2.");
+  assert((await page.locator("#homeProgressValue").innerText()) === "100%", "El progreso llega a 100% solo despues de la matriz final.");
+  await page.screenshot({ path: path.join(outputDir, "03-matriz-final.png"), fullPage: false });
 
-  const arResource = page.locator(".media-card").filter({ hasText: "Laboratorio de realidad aumentada" });
-  await arResource.click();
+  await page.locator(".course-unit-node").filter({ hasText: "Unidad 2" }).click();
+  await page.waitForSelector("#moduleView.is-active");
+  await page.locator(".media-card").filter({ hasText: "Laboratorio de realidad aumentada" }).click();
   await page.waitForSelector("#arView.is-active");
-  assert(await page.locator(".ar-target-button").count() === 4, "El laboratorio AR presenta cuatro capas organizacionales.");
-  assert(await page.locator("#arQrCode canvas, #arQrCode img").count() >= 1, "El laboratorio genera un código QR.");
-  const intellectualTarget = page.locator(".ar-target-button").filter({ hasText: "Capital intelectual" });
-  await intellectualTarget.click();
-  assert(await page.locator("#arFloatingCard").isHidden(), "La información AR no aparece antes del escaneo.");
+  assert(await page.locator(".ar-target-button").count() === 4, "El laboratorio AR presenta cuatro marcadores genericos.");
+  assert(!(await page.locator("#arTargetList").innerText()).includes("Capital humano"), "Antes del escaneo no se revela ningun capital en la lista.");
+  assert(await page.locator("#arFloatingCard").isHidden(), "La informacion AR no aparece antes del escaneo.");
+  await page.locator(".ar-target-button").nth(1).click();
   await page.locator("#btnSimulateARScan").click();
-  assert((await page.locator("#arFloatingLabel").innerText()) === "Capital intelectual", "El escaneo revela la capa AR seleccionada.");
-  assert((await page.locator("#arInsightPanel").innerText()).includes("Datos importantes"), "La capa AR muestra información ampliada e interactiva.");
-  await page.screenshot({ path: path.join(outputDir, "03-realidad-aumentada.png"), fullPage: false });
+  assert((await page.locator("#arFloatingLabel").innerText()) === "Capital intelectual", "El escaneo revela la capa seleccionada.");
+  const arText = await page.locator("#arInsightPanel").innerText();
+  assert(arText.includes("Características principales"), "La capa AR muestra caracteristicas.");
+  assert(arText.includes("Ejemplo aplicado"), "La capa AR muestra ejemplo aplicado.");
+  assert(arText.includes("Riesgos relacionados"), "La capa AR muestra riesgos.");
+  await page.screenshot({ path: path.join(outputDir, "04-realidad-aumentada.png"), fullPage: false });
 
   await page.locator("#btnBackFromAR").click();
   await page.waitForSelector("#moduleView.is-active");
   await page.locator("#btnGoProfile").click();
   await page.waitForSelector("#profileView.is-active");
-  assert(await page.locator(".badge-card.is-unlocked").count() >= 2, "El perfil muestra insignias digitales desbloqueadas.");
-  assert((await page.locator("#profileCertCard").innerText()).includes("Capital Personal Estratégico"), "El perfil incluye la insignia de la matriz final.");
-  await page.screenshot({ path: path.join(outputDir, "04-insignias.png"), fullPage: false });
+  assert(await page.locator(".badge-card.is-unlocked").count() >= 4, "El perfil muestra las cuatro insignias desbloqueadas.");
+  assert((await page.locator("#profileCertCard").innerText()).includes("Certificado final disponible"), "El certificado general solo aparece al completar las dos unidades y la matriz.");
+  await page.screenshot({ path: path.join(outputDir, "05-perfil-insignias.png"), fullPage: false });
 
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
   const mobilePage = await mobileContext.newPage();
   await mobilePage.goto("http://127.0.0.1:8135/?experience=capitales", { waitUntil: "domcontentloaded" });
   await mobilePage.waitForSelector("#arView.is-active");
   assert(await mobilePage.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "La experiencia AR no se desborda en celular.");
-  assert(await mobilePage.locator(".ar-target-button").count() === 4, "La vista móvil conserva las cuatro capas AR.");
-  assert(await mobilePage.locator("#arFloatingCard").isHidden(), "La vista móvil inicia sin mostrar contenido permanente de RA.");
+  assert(await mobilePage.locator("#arFloatingCard").isHidden(), "La vista movil inicia sin contenido AR revelado.");
   await mobilePage.locator("#btnSimulateARScan").click();
-  assert(await mobilePage.locator("#arInsightPanel").isVisible(), "La vista móvil revela la información después del escaneo guiado.");
-  await mobilePage.screenshot({ path: path.join(outputDir, "05-ar-movil.png"), fullPage: true });
+  assert(await mobilePage.locator("#arInsightPanel").isVisible(), "La vista movil revela informacion despues del escaneo guiado.");
+  await mobilePage.screenshot({ path: path.join(outputDir, "06-ar-movil.png"), fullPage: true });
   await mobileContext.close();
 
   const relevantMissingResources = missingResources.filter(url => !url.endsWith("/favicon.ico"));

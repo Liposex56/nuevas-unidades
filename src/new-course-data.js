@@ -127,7 +127,7 @@ window.KNOWLEDGE_COURSE_DATA = {
   2: {
     title: "Caso Integrador: Universidad Horizonte",
     desc: "Diagnostica sus capitales organizacionales y diseña una estrategia tecnológica para proteger y movilizar el conocimiento.",
-    completionMode: "matrix",
+    completionMode: "case",
     theoryNodes: [
       {
         id: "2.1",
@@ -223,12 +223,12 @@ window.KNOWLEDGE_BADGES = [
     condition: "Aprobar la evaluación de la Unidad 1 con mínimo 80%."
   },
   {
-    id: "reto-clasificacion",
-    activity: "memory",
-    icon: "MAP",
-    name: "Analista de Evidencias",
-    description: "Clasifica situaciones complejas según su capital o proceso de conocimiento.",
-    condition: "Completar la misión de clasificación de una unidad."
+    id: "unidad-2-estratega",
+    modId: 2,
+    icon: "U2",
+    name: "Estratega del Conocimiento",
+    description: "Diseña una respuesta institucional para proteger y movilizar el conocimiento.",
+    condition: "Completar el Caso Integrador de la Unidad 2 con mínimo 80%."
   },
   {
     id: "laboratorio-ar",
@@ -240,7 +240,7 @@ window.KNOWLEDGE_BADGES = [
   },
   {
     id: "matriz-capital",
-    modId: 2,
+    finalEvaluation: true,
     icon: "150",
     name: "Capital Personal Estratégico",
     description: "Completa la matriz, interpreta tus capitales y presenta tu balance final.",
@@ -303,24 +303,64 @@ window.KNOWLEDGE_REINFORCEMENT_DATA = {
     ]
   },
   2: {
-    mode: "sorter",
-    title: "Diagnóstico de capitales",
-    instruction: "Clasifica los hallazgos del caso Universidad Horizonte. El reto es diferenciar capitales, tecnología y gobierno del conocimiento.",
-    categories: [
-      { id: "humano", label: "Capital humano", hint: "Capacidades, experiencia, liderazgo y motivación de las personas." },
-      { id: "intelectual", label: "Capital intelectual", hint: "Memoria institucional, procesos, investigaciones y activos intangibles." },
-      { id: "relacional", label: "Capital relacional", hint: "Confianza, redes y alianzas que generan intercambio de valor." },
-      { id: "digital", label: "Ecosistema digital", hint: "Herramientas, plataformas, datos e IA articuladas a un propósito." },
-      { id: "gobernanza", label: "Gobernanza", hint: "Reglas, responsables, criterios de calidad, seguridad y actualización." },
-      { id: "comunidad", label: "Comunidad de práctica", hint: "Personas que aprenden de problemas comunes y comparten soluciones." }
-    ],
-    cards: [
-      { id: "u2-a", text: "Tres docentes poseen metodologías valiosas, pero nadie más sabe aplicarlas.", answer: "humano" },
-      { id: "u2-b", text: "Las investigaciones existen, aunque están dispersas y sin criterios para encontrarlas.", answer: "intelectual" },
-      { id: "u2-c", text: "Los aliados externos entregan aportes, pero no reciben retorno ni seguimiento.", answer: "relacional" },
-      { id: "u2-d", text: "La institución compró plataformas, pero no las integró con procesos académicos.", answer: "digital" },
-      { id: "u2-e", text: "No hay responsables claros para validar, actualizar y proteger los recursos.", answer: "gobernanza" },
-      { id: "u2-f", text: "Docentes de varias áreas quieren reunirse periódicamente para resolver problemas similares.", answer: "comunidad" }
+    mode: "investigation",
+    title: "Investigación del problema institucional",
+    instruction: "Explora seis espacios de Universidad Horizonte, abre las evidencias y agrégalas al tablero de investigación. La unidad no avanza hasta que el diagnóstico esté completo.",
+    locations: [
+      {
+        id: "docentes",
+        icon: "01",
+        place: "Sala de profesores",
+        title: "Docente próximo a jubilarse",
+        signal: "Saber experto en riesgo",
+        capital: "Capital humano",
+        explanation: "Tres docentes dominan metodologías híbridas, pero ese conocimiento sigue siendo tácito. Si no se socializa y documenta, la universidad pierde experiencia crítica."
+      },
+      {
+        id: "repositorio",
+        icon: "02",
+        place: "Repositorio institucional",
+        title: "Materiales dispersos",
+        signal: "Memoria difícil de recuperar",
+        capital: "Capital intelectual",
+        explanation: "Existen guías, investigaciones y datos, pero no tienen metadatos, responsables ni taxonomía común. La información no se convierte en conocimiento reutilizable."
+      },
+      {
+        id: "plataforma",
+        icon: "03",
+        place: "Aula virtual",
+        title: "Plataforma sin responsables",
+        signal: "Tecnología sin gobernanza",
+        capital: "Ecosistema digital",
+        explanation: "La universidad compró herramientas, pero no definió quién valida, actualiza o mide su uso. La tecnología aislada no transforma la cultura de aprendizaje."
+      },
+      {
+        id: "aliados",
+        icon: "04",
+        place: "Mesa de aliados",
+        title: "Aportes sin retorno",
+        signal: "Confianza debilitada",
+        capital: "Capital relacional",
+        explanation: "Los aliados externos entregan experiencias, pero no reciben devolución ni evidencia de uso. El vínculo pierde valor si no hay aprendizaje mutuo."
+      },
+      {
+        id: "investigacion",
+        icon: "05",
+        place: "Centro de investigación",
+        title: "Investigaciones repetidas",
+        signal: "Duplicación de esfuerzos",
+        capital: "Capital intelectual",
+        explanation: "Varios equipos resuelven problemas similares sin conocer trabajos previos. Falta una memoria institucional visible que conecte hallazgos y evite reprocesos."
+      },
+      {
+        id: "estudiantes",
+        icon: "06",
+        place: "Atención estudiantil",
+        title: "Recursos difíciles de encontrar",
+        signal: "Accesibilidad baja",
+        capital: "Gestión del conocimiento",
+        explanation: "Los estudiantes no encuentran rutas, materiales ni respuestas consistentes. La gestión debe organizar acceso, calidad, comunicación y seguimiento."
+      }
     ]
   }
 };
@@ -355,31 +395,33 @@ window.KNOWLEDGE_REVIEW_DATA = {
     ]
   },
   2: {
-    mode: "decisionLab",
-    title: "Mesa de transformación de Universidad Horizonte",
-    instruction: "Toma decisiones de diagnóstico. Las pistas orientan el razonamiento sin revelar la opción correcta.",
-    decisions: [
-      {
-        prompt: "Los aliados sienten que sus aportes desaparecen cuando termina cada proyecto. ¿Qué decisión fortalece mejor el capital relacional?",
-        options: ["Cambiar de aliados cada semestre", "Crear mesas de conocimiento y devolución de resultados", "Guardar los aportes solo para uso interno", "Enviar boletines promocionales"],
-        correct: 1,
-        hint: "El capital relacional depende de confianza, retorno y aprendizaje mutuo.",
-        feedback: "Las mesas y la devolución visible transforman relaciones en conocimiento compartido."
-      },
-      {
-        prompt: "La institución tiene plataformas, pero nadie sabe quién valida contenidos ni qué se puede publicar. ¿Qué falta?",
-        options: ["Más equipos físicos", "Gobernanza del conocimiento", "Eliminar repositorios", "Menos comunicación entre áreas"],
-        correct: 1,
-        hint: "Piensa en reglas, responsables, permisos, calidad y seguridad.",
-        feedback: "La gobernanza permite que la tecnología sea confiable y sostenible."
-      },
-      {
-        prompt: "Un grupo docente quiere reunirse cada quince días para resolver problemas de enseñanza híbrida y compartir recursos. ¿Qué figura conviene crear?",
-        options: ["Comunidad de práctica", "Archivo cerrado", "Comité financiero", "Encuesta aislada"],
-        correct: 0,
-        hint: "No es solo reunión administrativa: es aprendizaje entre pares.",
-        feedback: "Una comunidad de práctica convierte problemas comunes en soluciones colectivas."
-      }
+    mode: "interventionRoute",
+    title: "Construcción del ecosistema de conocimiento",
+    instruction: "Ordena la ruta de intervención y ubica cada componente en el mapa institucional. Aquí no eliges opciones: construyes una arquitectura coherente.",
+    steps: [
+      { id: "riesgo", order: 1, title: "Identificar conocimiento en riesgo", detail: "Ubicar saber experto, documentos críticos y relaciones estratégicas vulnerables." },
+      { id: "entrevistar", order: 2, title: "Entrevistar a personas expertas", detail: "Capturar experiencia mediante observación, conversaciones guiadas y mentorías." },
+      { id: "documentar", order: 3, title: "Documentar experiencias", detail: "Convertir conocimiento tácito en guías, casos, protocolos y recursos reutilizables." },
+      { id: "clasificar", order: 4, title: "Clasificar recursos", detail: "Usar metadatos, taxonomías, permisos y criterios de calidad." },
+      { id: "transferir", order: 5, title: "Crear espacios de transferencia", detail: "Activar comunidades de práctica, mesas de aliados y aprendizaje entre pares." },
+      { id: "implementar", order: 6, title: "Implementar herramientas", detail: "Integrar repositorio, LMS, analítica, IA y recursos inmersivos con gobernanza." },
+      { id: "evaluar", order: 7, title: "Evaluar resultados", detail: "Medir reutilización, participación, confianza, accesibilidad y sostenibilidad." }
+    ],
+    zones: [
+      { id: "personas", label: "Personas" },
+      { id: "procesos", label: "Procesos" },
+      { id: "conocimiento", label: "Conocimiento" },
+      { id: "tecnologia", label: "Tecnología" },
+      { id: "gobernanza", label: "Gobernanza" }
+    ],
+    components: [
+      { id: "mentoria", label: "Programa de mentoría", zone: "personas", detail: "Conecta expertos con equipos que necesitan aprender haciendo." },
+      { id: "comunidad", label: "Comunidad de práctica", zone: "personas", detail: "Mantiene conversación técnica y pedagógica alrededor de problemas comunes." },
+      { id: "protocolo", label: "Protocolos de actualización", zone: "gobernanza", detail: "Define responsables, calidad, permisos y ciclos de revisión." },
+      { id: "repositorio", label: "Repositorio con metadatos", zone: "conocimiento", detail: "Hace recuperables guías, investigaciones, casos y recursos institucionales." },
+      { id: "analitica", label: "Sistema de analítica", zone: "tecnologia", detail: "Mide uso, reutilización y brechas de acceso." },
+      { id: "aliados", label: "Mesa de aliados", zone: "procesos", detail: "Ordena devolución de resultados, acuerdos y transferencia externa." },
+      { id: "ia", label: "Asistente de inteligencia artificial", zone: "tecnologia", detail: "Ayuda a buscar, orientar y recomendar recursos sin reemplazar la gobernanza humana." }
     ]
   }
 };
@@ -460,10 +502,21 @@ window.KNOWLEDGE_AR_TARGETS = [
     color: "#ff8c69",
     description: "Experiencia, habilidades, motivación, creatividad y capacidad de aprender.",
     detail: "En Universidad Horizonte, el capital humano está en la experiencia docente, la capacidad de diseñar clases híbridas, el liderazgo académico y la disposición para compartir saberes antes de que se pierdan.",
+    characteristics: [
+      "Vive principalmente en las personas y en su experiencia acumulada.",
+      "Se fortalece con confianza, formación, mentoría y participación.",
+      "Puede perderse cuando no existen mecanismos de transferencia."
+    ],
+    example: "Una docente experta sabe ajustar una clase híbrida cuando detecta baja participación. Si esa práctica se observa, se conversa y se documenta, deja de depender solo de ella.",
     facts: [
       "El conocimiento tácito vive en las personas y suele perderse si no se transfiere.",
       "La mentoría convierte experiencia individual en aprendizaje colectivo.",
       "La motivación y la confianza son condiciones para compartir conocimiento."
+    ],
+    risks: [
+      "Jubilación o rotación sin captura de experiencia.",
+      "Baja motivación para compartir saberes.",
+      "Formación digital desconectada de necesidades reales."
     ],
     actions: [
       "Identifica expertos próximos a jubilarse.",
@@ -480,10 +533,21 @@ window.KNOWLEDGE_AR_TARGETS = [
     color: "#8f8cff",
     description: "Procesos, investigaciones, datos, propiedad intelectual y memoria reutilizable.",
     detail: "El capital intelectual convierte la experiencia en memoria institucional: protocolos, guías, investigaciones, repositorios, bases de datos, rutas de formación y criterios de calidad.",
+    characteristics: [
+      "Organiza conocimiento en recursos recuperables y reutilizables.",
+      "Depende de metadatos, calidad, actualización y permisos claros.",
+      "Permite aprender de experiencias anteriores sin repetir esfuerzos."
+    ],
+    example: "Si dos grupos investigan el mismo problema sin conocer trabajos previos, el repositorio debe conectar antecedentes, autores, hallazgos y recursos de aula.",
     facts: [
       "No todo archivo es conocimiento: debe ser claro, recuperable y aplicable.",
       "Los metadatos ayudan a encontrar y reutilizar recursos.",
       "La combinación SECI integra documentos para producir nuevo conocimiento."
+    ],
+    risks: [
+      "Archivos dispersos que nadie consulta.",
+      "Duplicación de investigaciones y materiales.",
+      "Pérdida de calidad por falta de responsables."
     ],
     actions: [
       "Crea un repositorio con responsables y criterios de actualización.",
@@ -500,10 +564,21 @@ window.KNOWLEDGE_AR_TARGETS = [
     color: "#48d6aa",
     description: "Confianza, redes y aprendizaje con estudiantes, aliados y comunidades.",
     detail: "El capital relacional aparece cuando estudiantes, egresados, aliados, comunidades y docentes producen confianza, retroalimentación y proyectos que generan valor para todos.",
+    characteristics: [
+      "Se basa en confianza, reciprocidad y comunicación sostenida.",
+      "Conecta la universidad con estudiantes, egresados, comunidades y aliados.",
+      "Produce valor cuando las relaciones generan aprendizaje compartido."
+    ],
+    example: "Un aliado externo entrega datos para un proyecto; la universidad devuelve resultados, crea un caso de clase y abre una mesa de mejora conjunta.",
     facts: [
       "Una red sin confianza no moviliza conocimiento.",
       "Los aliados aportan experiencia externa y validan necesidades reales.",
       "La transferencia de conocimiento requiere diálogo, seguimiento y retorno."
+    ],
+    risks: [
+      "Relaciones utilizadas solo para cumplir requisitos.",
+      "Aportes externos sin retroalimentación.",
+      "Pérdida de legitimidad y colaboración futura."
     ],
     actions: [
       "Crea mesas de conocimiento con aliados estratégicos.",
@@ -520,10 +595,21 @@ window.KNOWLEDGE_AR_TARGETS = [
     color: "#56b8ff",
     description: "Plataformas, IA, analítica, simulación y colaboración conectadas con un propósito.",
     detail: "El ecosistema digital integra LMS, repositorios, asistentes de IA, analítica, simuladores y recursos inmersivos para que el conocimiento sea accesible, seguro y útil.",
+    characteristics: [
+      "Integra herramientas con procesos académicos y reglas de uso.",
+      "Facilita acceso, colaboración, trazabilidad y evaluación.",
+      "Necesita formación, accesibilidad, seguridad y soporte continuo."
+    ],
+    example: "Un LMS conectado con repositorio, analítica y asistente de IA permite ubicar recursos, recomendar rutas y detectar qué materiales necesitan actualización.",
     facts: [
       "Comprar tecnología no transforma la cultura por sí sola.",
       "La analítica ayuda a saber qué recursos se consultan y reutilizan.",
       "La accesibilidad permite que más estudiantes participen en igualdad de condiciones."
+    ],
+    risks: [
+      "Herramientas compradas sin propósito pedagógico.",
+      "Datos sin protección ni criterios de calidad.",
+      "Brechas de acceso para estudiantes o docentes."
     ],
     actions: [
       "Define una arquitectura con responsables, permisos y objetivos.",
