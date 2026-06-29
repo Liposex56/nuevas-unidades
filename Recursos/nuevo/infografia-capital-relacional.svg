@@ -1,25 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
-  <title id="title">Infografía: capital relacional</title>
-  <desc id="desc">Redes, confianza y alianzas que generan valor.</desc>
-  <rect width="1200" height="760" rx="36" fill="#0b1614"/>
-  <g opacity=".22" stroke="#f3c75f" stroke-width="3">
-    <path d="M230 420L420 280 610 440 790 250 980 420"/>
-    <path d="M230 420L610 440M420 280L790 250M610 440L980 420"/>
+  <title id="title">Infografía sobre capital relacional</title>
+  <desc id="desc">Redes de confianza que generan intercambio y aprendizaje.</desc>
+  <rect width="1200" height="760" rx="34" fill="#07110f"/>
+  <text x="70" y="82" fill="#f3c75f" font-family="Arial,Segoe UI,sans-serif" font-size="28" font-weight="800">CAPITAL RELACIONAL</text>
+  <text x="70" y="136" fill="#ffffff" font-family="Arial,Segoe UI,sans-serif" font-size="44" font-weight="900">Confianza que multiplica valor</text>
+  <text x="70" y="178" fill="#d9ebe6" font-family="Arial,Segoe UI,sans-serif" font-size="22">Las relaciones sostienen intercambio, legitimidad y proyectos compartidos.</text>
+
+  <g stroke="#f3c75f" stroke-width="4" opacity=".42">
+    <path d="M260 410L430 300 610 430 790 290 960 410"/>
+    <path d="M260 410L610 430M430 300L790 290M610 430L960 410"/>
   </g>
-  <g>
-    <circle cx="230" cy="420" r="70" fill="#5ee2c2"/><circle cx="420" cy="280" r="70" fill="#f3c75f"/><circle cx="610" cy="440" r="70" fill="#8ea8ff"/><circle cx="790" cy="250" r="70" fill="#86d69f"/><circle cx="980" cy="420" r="70" fill="#ff806f"/>
+  <g font-family="Arial,Segoe UI,sans-serif" font-size="21" font-weight="900" fill="#07110f" text-anchor="middle">
+    <circle cx="260" cy="410" r="72" fill="#5ee2c2"/><text x="260" y="418">Estudiantes</text>
+    <circle cx="430" cy="300" r="72" fill="#f3c75f"/><text x="430" y="308">Egresados</text>
+    <circle cx="610" cy="430" r="72" fill="#8ea8ff"/><text x="610" y="438">Aliados</text>
+    <circle cx="790" cy="290" r="72" fill="#86d69f"/><text x="790" y="298">Docentes</text>
+    <circle cx="960" cy="410" r="72" fill="#ff806f"/><text x="960" y="418">Comunidad</text>
   </g>
-  <text x="70" y="82" fill="#f3c75f" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="800">CAPITAL RELACIONAL</text>
-  <text x="70" y="136" fill="#fff" font-family="Inter,Segoe UI,sans-serif" font-size="52" font-weight="900">Confianza que multiplica conocimiento</text>
-  <text x="70" y="176" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="23">No es una lista de contactos: son relaciones que permiten</text>
-  <text x="70" y="208" fill="#d9ebe6" font-family="Inter,Segoe UI,sans-serif" font-size="23">intercambio, legitimidad y proyectos compartidos.</text>
-  <g font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="900" fill="#07110f" text-anchor="middle">
-    <text x="230" y="428">Estudiantes</text><text x="420" y="288">Egresados</text><text x="610" y="448">Aliados</text><text x="790" y="258">Docentes</text><text x="980" y="428">Comunidad</text>
-  </g>
-  <g transform="translate(130 560)" font-family="Inter,Segoe UI,sans-serif">
-    <rect width="940" height="120" rx="24" fill="#10221f" stroke="#f3c75f"/>
-    <text x="34" y="46" fill="#f3c75f" font-size="27" font-weight="900">Se fortalece cuando hay:</text>
-    <text x="34" y="82" fill="#f3ead0" font-size="21">retroalimentación visible · acuerdos claros · devolución de resultados</text>
-    <text x="34" y="112" fill="#f3ead0" font-size="21">proyectos colaborativos · aprendizaje mutuo</text>
+
+  <g transform="translate(150 600)" font-family="Arial,Segoe UI,sans-serif">
+    <rect width="900" height="96" rx="24" fill="#10221f" stroke="#f3c75f"/>
+    <text x="34" y="40" fill="#f3c75f" font-size="26" font-weight="900">Se fortalece con:</text>
+    <text x="34" y="72" fill="#f8ecd0" font-size="21">retroalimentación · acuerdos claros · devolución de resultados · colaboración</text>
   </g>
 </svg>

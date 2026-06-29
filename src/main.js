@@ -983,9 +983,34 @@ function getAssistantContextKey(mode) {
   ].join("|");
 }
 
+function getAssistantHistoryKey(moduleId = currentModuleId) {
+  return userKey(`fgc_assistant_history_${moduleId || "general"}`);
+}
+
+function normalizeAssistantHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter(item => item && ["user", "assistant"].includes(item.role) && typeof item.text === "string")
+    .slice(-80)
+    .map(item => ({
+      role: item.role,
+      text: item.text.slice(0, 1200),
+      time: item.time || new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })
+    }));
+}
+
+function loadAssistantHistory(moduleId = currentModuleId) {
+  return normalizeAssistantHistory(safeParseStoredJSON(localStorage.getItem(getAssistantHistoryKey(moduleId)), []));
+}
+
+function saveAssistantHistory(moduleId = currentModuleId) {
+  localStorage.setItem(getAssistantHistoryKey(moduleId), JSON.stringify(normalizeAssistantHistory(assistantHistory)));
+}
+
 function pushAssistantMessage(role, text) {
   assistantHistory.push({ role, text, time: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) });
-  if (assistantHistory.length > 16) assistantHistory = assistantHistory.slice(-16);
+  if (assistantHistory.length > 80) assistantHistory = assistantHistory.slice(-80);
+  saveAssistantHistory();
   renderAssistantChat();
   if (role === "assistant") {
     const speech = document.getElementById("companionSpeech");
@@ -1003,6 +1028,8 @@ function renderAssistantChat() {
     </article>
   `).join("");
   log.scrollTop = log.scrollHeight;
+  const quickActions = document.querySelector(".chat-page-actions");
+  if (quickActions) quickActions.hidden = assistantHistory.some(message => message.role === "user");
 }
 
 function openChatView(returnView = getActiveViewId()) {
@@ -1016,9 +1043,10 @@ function openChatView(returnView = getActiveViewId()) {
   if (summary) {
     const activity = assistantContext.activity || "recorrido";
     const topic = assistantContext.topic || courseData[currentModuleId]?.title || "el caso";
-    summary.textContent = `Estás en ${activity}. Te puedo orientar sobre ${topic}, darte pistas progresivas o revisar una respuesta antes de enviarla.`;
+    summary.textContent = `Estás en ${activity}. Te respondo sobre ${topic} y conservo esta conversación para que no pierdas tus preguntas.`;
   }
   if (topicTitle) topicTitle.textContent = assistantContext.topic || courseData[currentModuleId]?.title || "Estoy listo para ayudarte";
+  if (!assistantHistory.length) assistantHistory = loadAssistantHistory(currentModuleId);
   if (!assistantHistory.length) pushAssistantMessage("assistant", getCompanionMessage(currentModuleId));
   renderAssistantChat();
   switchView("chatView");
@@ -1026,7 +1054,6 @@ function openChatView(returnView = getActiveViewId()) {
 
 function resetAssistantChatForModule(moduleId) {
   assistantHelpCounters = {};
-  assistantHistory = [];
   setAssistantContext({
     activity: "Mapa de la unidad",
     topic: courseData[moduleId]?.title || "",
@@ -1038,7 +1065,165 @@ function resetAssistantChatForModule(moduleId) {
     isCorrect: null,
     attempts: 0
   });
-  pushAssistantMessage("assistant", getCompanionMessage(moduleId));
+  assistantHistory = loadAssistantHistory(moduleId);
+  if (!assistantHistory.length) {
+    pushAssistantMessage("assistant", getCompanionMessage(moduleId));
+  } else {
+    renderAssistantChat();
+  }
+}
+
+function normalizeForSearch(value = "") {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9ñ\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function includesAny(text, terms) {
+  return terms.some(term => text.includes(normalizeForSearch(term)));
+}
+
+function stripHtml(value = "") {
+  return String(value)
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&aacute;/g, "á")
+    .replace(/&eacute;/g, "é")
+    .replace(/&iacute;/g, "í")
+    .replace(/&oacute;/g, "ó")
+    .replace(/&uacute;/g, "ú")
+    .replace(/&ntilde;/g, "ñ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getShortContentSummary(content = "", maxSentences = 2) {
+  const text = stripHtml(content);
+  if (!text) return "";
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return sentences.slice(0, maxSentences).join(" ");
+}
+
+function getCurrentModuleTitle() {
+  return courseData[currentModuleId]?.title || "el recorrido";
+}
+
+function getFirstName() {
+  return getStudentName().split(/\s+/)[0] || "estudiante";
+}
+
+function answerFromTheoryNode(normalizedQuestion) {
+  const nodes = courseData[currentModuleId]?.theoryNodes || [];
+  const matched = nodes.find(node => {
+    const title = normalizeForSearch(`${node.id} ${node.title}`);
+    const importantWords = title.split(" ").filter(word => word.length > 3);
+    return importantWords.some(word => normalizedQuestion.includes(word));
+  });
+  if (!matched) return "";
+  const summary = getShortContentSummary(matched.content, 3);
+  return `${getFirstName()}, sobre "${matched.title}": ${summary} En esta parte lo importante es conectar el concepto con una evidencia del caso o con una acción concreta de gestión del conocimiento.`;
+}
+
+function answerCurrentContext(normalizedQuestion) {
+  if (includesAny(normalizedQuestion, ["respuesta", "mi respuesta", "correcta", "revisar", "revision", "por que esta mal", "por que"])) {
+    if (assistantContext.selectedAnswer) {
+      if (assistantContext.isCorrect === true) {
+        return `${getFirstName()}, tu respuesta "${assistantContext.selectedAnswer}" está bien orientada. ${assistantContext.feedback || "Conecta el concepto central con la evidencia del caso y propone una acción coherente."}`;
+      }
+      return `${getFirstName()}, revisa tu respuesta "${assistantContext.selectedAnswer}". ${assistantContext.hint || "Contrasta si atiende la causa del problema o solo un síntoma visible."} ${assistantContext.feedback || ""}`.trim();
+    }
+    if (assistantContext.question) {
+      return `${getFirstName()}, para esa pregunta analiza primero la evidencia: ${assistantContext.question} Luego identifica el capital o proceso afectado y elige la acción que resuelva la causa, no solo la apariencia del problema.`;
+    }
+  }
+  return "";
+}
+
+function getDirectAssistantAnswer(question = "") {
+  const normalizedQuestion = normalizeForSearch(question);
+  const moduleTitle = getCurrentModuleTitle();
+  const contextualAnswer = answerCurrentContext(normalizedQuestion);
+  if (contextualAnswer) return contextualAnswer;
+
+  if (includesAny(normalizedQuestion, ["hola", "buenas", "buen dia", "buenas tardes", "ayuda"])) {
+    return `Hola ${getFirstName()}. Estoy contigo en ${moduleTitle}. Puedes preguntarme por un concepto, una actividad, la evaluación, el caso, la matriz o la realidad aumentada, y te responderé de forma directa sin borrar esta conversación.`;
+  }
+
+  if (includesAny(normalizedQuestion, ["seci", "socializacion", "exteriorizacion", "combinacion", "interiorizacion"])) {
+    return "El modelo SECI explica cómo se crea conocimiento: socialización comparte experiencia tácita; exteriorización convierte esa experiencia en documentos o modelos; combinación integra documentos y datos; interiorización lleva lo aprendido a la práctica. En el caso, úsalo para decidir cómo capturar experiencia docente y volverla memoria institucional.";
+  }
+
+  if (includesAny(normalizedQuestion, ["tacito", "explicito", "conocimiento personal", "documentar experiencia"])) {
+    return "El conocimiento tácito vive en la experiencia de las personas: intuición, criterio, habilidades y formas de resolver problemas. El explícito ya está organizado en guías, protocolos, investigaciones o repositorios. La gestión del conocimiento busca que lo valioso no se pierda: primero se comparte, luego se documenta y después se reutiliza.";
+  }
+
+  if (includesAny(normalizedQuestion, ["gestion del conocimiento", "que es gestion", "conocimiento organizacional", "memoria institucional"])) {
+    return "La gestión del conocimiento es organizar lo que una institución sabe para que no dependa solo de una persona. Incluye identificar saberes importantes, documentarlos, clasificarlos, compartirlos y usarlos para tomar mejores decisiones. En Universidad Horizonte sirve para proteger la experiencia docente, evitar duplicaciones y mejorar el aprendizaje colectivo.";
+  }
+
+  if (includesAny(normalizedQuestion, ["aprendizaje organizacional", "senge", "organizacion inteligente", "pensamiento sistemico", "vision compartida"])) {
+    return "El aprendizaje organizacional ocurre cuando una institución convierte experiencias individuales en mejora colectiva. Senge lo explica con cinco disciplinas: dominio personal, modelos mentales, visión compartida, aprendizaje en equipo y pensamiento sistémico. La clave es que el aprendizaje no quede aislado, sino que cambie prácticas y decisiones.";
+  }
+
+  if (includesAny(normalizedQuestion, ["innovacion", "cultura", "ideas", "schumpeter"])) {
+    return "La innovación no es solo inventar algo nuevo; es convertir ideas en mejoras reales. En gestión del conocimiento, la innovación aparece cuando las personas comparten experiencias, documentan aprendizajes, colaboran y prueban soluciones. Una cultura de conocimiento permite experimentar, aprender de errores y conectar saberes con necesidades reales.";
+  }
+
+  if (includesAny(normalizedQuestion, ["transformacion digital", "tic", "tecnologia", "plataforma", "lms", "repositorio", "ia", "analitica"])) {
+    return "La transformación digital tiene sentido cuando mejora el acceso, la colaboración y la reutilización del conocimiento. No basta comprar plataformas: se necesitan procesos, responsables, formación, criterios de calidad y datos útiles. Un buen ecosistema conecta LMS, repositorio, analítica, IA y comunidades de práctica con objetivos claros.";
+  }
+
+  if (includesAny(normalizedQuestion, ["capital humano", "habilidades", "experiencia docente", "mentoria", "jubilacion"])) {
+    return "El capital humano son las habilidades, experiencias, motivación, creatividad y capacidad de aprendizaje de las personas. En Universidad Horizonte, el riesgo principal es que docentes expertos se jubilen sin transferir su saber. La respuesta adecuada combina mentorías, entrevistas, observación de clases y documentación de buenas prácticas.";
+  }
+
+  if (includesAny(normalizedQuestion, ["capital intelectual", "activos intangibles", "protocolos", "metadatos", "investigaciones", "duplicacion"])) {
+    return "El capital intelectual es la memoria reutilizable de la institución: investigaciones, guías, bases de datos, protocolos, criterios de calidad y repositorios. Si los documentos están dispersos, no generan valor. Por eso se necesitan metadatos, responsables, buscador, permisos y actualización periódica.";
+  }
+
+  if (includesAny(normalizedQuestion, ["capital relacional", "aliados", "confianza", "egresados", "comunidad", "redes"])) {
+    return "El capital relacional es la confianza y el intercambio con estudiantes, egresados, docentes, aliados y comunidades. No es solo tener contactos; es producir aprendizaje compartido. En el caso se fortalece con mesas de conocimiento, devolución de resultados, acuerdos claros y proyectos colaborativos.";
+  }
+
+  if (includesAny(normalizedQuestion, ["caso", "universidad horizonte", "diagnostico", "ruta", "intervencion"])) {
+    return "En el caso de Universidad Horizonte debes diagnosticar cuatro frentes: capital humano en riesgo por jubilación, capital intelectual disperso, capital relacional debilitado y tecnología sin estrategia. La ruta sólida empieza por identificar conocimiento crítico, capturarlo, documentarlo, clasificarlo, transferirlo, integrarlo con tecnología y evaluar resultados.";
+  }
+
+  if (includesAny(normalizedQuestion, ["realidad aumentada", "aumentada", "qr", "camara", "marcador", "ar"])) {
+    return "En realidad aumentada debes escoger una capa, escanear el QR real con la cámara y abrir la vista teórica correspondiente. La teoría no debe quedarse encima de la cámara: se muestra en una pantalla aparte para leer con calma el capital humano, intelectual, relacional o el ecosistema digital.";
+  }
+
+  if (includesAny(normalizedQuestion, ["actividad", "actividades", "refuerzo", "parejas", "clasificar", "evidencias", "decisiones", "ecosistema"])) {
+    return currentModuleId === 1
+      ? "En la Unidad 1 las actividades sirven para comprobar si reconoces conceptos y procesos de gestión del conocimiento. Lee la evidencia, identifica si corresponde a conocimiento tácito, explícito, SECI, aprendizaje o innovación, y justifica mentalmente por qué esa categoría encaja."
+      : "En el caso integrador las actividades son de análisis aplicado: primero diagnosticas evidencias, luego tomas decisiones y finalmente construyes una ruta de intervención. No busques solo acertar; intenta explicar qué capital está afectado y qué acción lo fortalece.";
+  }
+
+  if (includesAny(normalizedQuestion, ["evaluacion", "aprobar", "80", "desbloquear", "preguntas", "quiz"])) {
+    return currentModuleId === 1
+      ? "La evaluación de la Unidad 1 se desbloquea cuando completas teoría, recursos y actividades. Necesitas mínimo 80% para aprobar y avanzar al caso. Si ya aprobaste, tu mejor resultado queda guardado."
+      : "El caso se completa cuando tus decisiones y la matriz final muestran comprensión aplicada. La meta no es memorizar, sino justificar qué capital se afecta, qué conocimiento se protege y qué tecnología ayuda con propósito.";
+  }
+
+  if (includesAny(normalizedQuestion, ["matriz", "capital personal", "balance", "puntaje", "150", "reflexion"])) {
+    return "La matriz de capital personal te pide valorar capital humano, intelectual y relacional de 1 a 5. Después interpretas el puntaje y escribes una reflexión crítica. La respuesta fuerte no es decir que todo está alto, sino reconocer fortalezas, oportunidades de mejora y acciones concretas para crecer.";
+  }
+
+  if (includesAny(normalizedQuestion, ["insignia", "diploma", "certificado", "perfil", "logro"])) {
+    return "Las insignias y certificados se desbloquean cuando completas los retos principales: evaluación de la Unidad 1, caso integrador, laboratorio AR y matriz final. En el perfil puedes revisar los certificados disponibles y abrir el diploma correspondiente.";
+  }
+
+  const theoryAnswer = answerFromTheoryNode(normalizedQuestion);
+  if (theoryAnswer) return theoryAnswer;
+
+  return `${getFirstName()}, te respondo desde ${moduleTitle}: identifica primero el concepto central, luego busca una evidencia concreta y finalmente plantea una acción. En este curso casi todo se analiza con esta lógica: qué conocimiento existe, dónde está, quién lo comparte, cómo se documenta y cómo se reutiliza para mejorar decisiones.`;
 }
 
 function getProgressiveHelp(mode, question = "") {
@@ -1100,14 +1285,15 @@ function getProgressiveHelp(mode, question = "") {
 }
 
 function getAssistantResponse(mode, question = "") {
+  if (mode === "free") return getDirectAssistantAnswer(question);
   return getProgressiveHelp(mode, question);
 }
 
 window.askCompanionAssistant = function(mode) {
   const labels = {
-    hint: "Dame una pista sobre esta pregunta.",
-    explain: "Explícame este concepto.",
-    example: "Muéstrame un ejemplo.",
+    hint: "Necesito una pista.",
+    explain: "Explícame el concepto actual.",
+    example: "Muéstrame un ejemplo aplicado.",
     review: "Revisa mi respuesta."
   };
   pushAssistantMessage("user", labels[mode] || "Necesito ayuda.");
